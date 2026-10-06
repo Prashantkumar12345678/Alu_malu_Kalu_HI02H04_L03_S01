@@ -606,7 +606,7 @@ body.is-start{background:#47BCFD;}
 
 /* ===== NUDGE HAND — kit asset ===== */
 .nudge-hand{position:absolute;width:96px;height:96px;z-index:55;pointer-events:none;filter:drop-shadow(0 6px 10px rgba(0,0,0,.22));animation:nudgeMove 1s ease-in-out infinite;display:none;}
-.nudge-hand img{width:100%;height:100%;object-fit:contain;}
+.nudge-hand img{width:100%;height:100%;object-fit:contain;transform:rotate(34deg);}
 .nudge-hand.show{display:block;}
 @keyframes nudgeMove{0%,100%{transform:translateY(2px);}50%{transform:translateY(-14px);}}
 
@@ -1222,7 +1222,7 @@ body.is-start .stage{background:transparent !important;}
 body.is-start .stage-inner{visibility:hidden;}
 .start-gate{background:transparent;cursor:default;}
 .sg-card{position:absolute;left:110px;top:147px;width:1114px;height:456px;background:#FFFFFF;border:9px solid #FFFFFF;border-radius:43px;}
-.sg-card::before{content:"";position:absolute;inset:0;border-radius:32.5px;background:#55C5F6 url("assets/Images/TITLE%20PAGE.png") center -70px/100% 550px no-repeat;pointer-events:none;}
+.sg-card::before{content:"";position:absolute;inset:0;border-radius:32.5px;background:#55C5F6 url("assets/Images/TITLE%20PAGE.png?v=20261006-160839") center -70px/100% 550px no-repeat;pointer-events:none;}
 .sg-content{display:none;}
 .sg-mascot{left:-34px;top:255px;bottom:auto;width:208px;height:204px;}
 .sg-vo{left:80px;top:395px;bottom:auto;width:58px;height:58px;}
@@ -1319,7 +1319,7 @@ body.is-start .sg-mascot{transform:none;animation:none;}
 .dev-nav-btn{background:#2b3a55;color:#fff;border:none;border-radius:8px;padding:6px 11px;font-size:15px;line-height:1;cursor:pointer;}
 .dev-nav-btn:hover{background:#3c5278;}
 .dev-nav-btn:active{transform:translateY(1px);}
-.dev-nav-sel{border:none;border-radius:8px;padding:4px 6px;font-size:12px;max-width:200px;background:#eef2f8;color:#12203c;cursor:pointer;}
+.dev-nav-sel{border:none;border-radius:8px;padding:4px 6px;font-size:12px;max-width:min(380px,45vw);background:#eef2f8;color:#12203c;cursor:pointer;}
 .dev-nav-lbl{color:#fff;font-size:13px;font-weight:700;min-width:78px;text-align:center;letter-spacing:.02em;}
 .story-read-layout .ev-read-footer{width:620px;max-width:100%;justify-content:flex-end;}
 /* Story frame and reading chip from HI02H04_L01_S01. */

@@ -575,7 +575,7 @@ function pointNudgeAt(el) {
     ) || 1;
   nh.style.left = (r.left - sw.left) / scale + r.width / scale / 2 - 48 + "px";
   // fingertip overlaps the lower part of the tile (close to it, not far below)
-  nh.style.top = (r.top - sw.top) / scale + r.height / scale - 56 + "px";
+  nh.style.top = (r.top - sw.top) / scale + r.height / scale - 44 + "px";
   nh.classList.add("show");
 }
 
@@ -1551,6 +1551,7 @@ function mountQuestionPuzzle(host, slide) {
         return;
       }
       if (unlocked.has(i)) return;
+      stopNudge();
       currentQuestion = q;
       state.slideStart = Date.now();
       $("promptText").textContent = "सही उत्तर चुनिए";
@@ -1699,9 +1700,13 @@ function mountQuestionPuzzle(host, slide) {
     dragging = null;
     sourceImage.onload = null;
     timers.forEach(clearTimeout);
+    stopNudge();
     $("hintBtn").onclick = null;
   };
   read();
+  // Introduce one question mark only; subsequent cards are explored by the learner.
+  const firstTile = tiles.find((_, i) => positions[i] === 0);
+  if (firstTile && audioFor(slide, "prompt")) pointNudgeAt(firstTile.querySelector(".qp-mark"));
 }
 
 function finishAnswer(slide, success) {
@@ -1752,10 +1757,10 @@ function mountReadingPractice(host, slide) {
   card.querySelector(".ev-text").appendChild(mic);
   let timer, stopWords=()=>{}, closed=false, mode="ready";
   const current=()=>!closed && CARD.slides[state.idx]===slide;
-  state.slideCleanup=()=>{closed=true;clearTimeout(timer);stopWords();mic.classList.remove("p2-rec");};
+  state.slideCleanup=()=>{closed=true;clearTimeout(timer);stopWords();stopNudge();mic.classList.remove("p2-rec");};
   const narrate=()=>{
     if(!current() || mode==="narrating")return;
-    clearTimeout(timer);stopWords();
+    clearTimeout(timer);stopWords();stopNudge();
     mode="narrating";
     card.classList.remove("verse-done");
     mic.classList.remove("p2-rec");
@@ -1786,7 +1791,10 @@ function mountReadingPractice(host, slide) {
   };
   setNavActive(false);
   const instruction=audioFor(slide,"prompt");
-  if(instruction)play(instruction,()=>{});
+  if(instruction){
+    play(instruction,()=>{});
+    if(slide.id==="T1")pointNudgeAt(mic);
+  }
 }
 
 const SlideModules = {
@@ -7233,6 +7241,23 @@ function boot() {
     buildDevNav();
   }
 }
+function devScreenCode(slide) {
+  const category = screen => screen.type === "STORY_READALONG" ? "T"
+    : screen.type === "PHASE_TRANSITION" ? "G"
+    : screen.type === "PICTURE_PUZZLE" ? "P"
+    : screen.type === "CELEBRATION" ? "C" : "Q";
+  const prefix = category(slide);
+  const group = CARD.slides.filter(screen => category(screen) === prefix);
+  return prefix + (group.indexOf(slide) + (prefix === "T" ? 2 : 1));
+}
+function devScreenName(slide) {
+  const name = slide.type === "STORY_READALONG" ? "Story " + slide.data.page_no
+    : slide.type === "PHASE_TRANSITION" ? ({PT1:"Story Start",PT2:"Question Start",PT3:"Puzzle Start"}[slide.id] || "Start")
+    : slide.type === "PICTURE_PUZZLE" ? "Picture Puzzle"
+    : slide.type === "CELEBRATION" ? "Celebration"
+    : slide.prompt_hi || "Question";
+  return devScreenCode(slide) + " " + name;
+}
 function buildDevNav() {
   if ($("devNav")) return $("devNav");
   const bar = document.createElement("div");
@@ -7245,10 +7270,11 @@ function buildDevNav() {
   };
   const home=button("⌂","Landing"), first=button("⏮","First page"), prev=button("◀","Previous page"), next=button("▶","Next page"), last=button("⏭","Last page");
   const select=document.createElement("select");select.className="dev-nav-sel";select.setAttribute("aria-label","Jump to page");
-  const landing=document.createElement("option");landing.value="-1";landing.textContent="Landing";select.appendChild(landing);
+  const landing=document.createElement("option");landing.value="-1";landing.textContent="T1 Title Page";select.appendChild(landing);
   CARD.slides.forEach((slide,i)=>{
     const option=document.createElement("option");option.value=i;
-    option.textContent=(i+1)+". "+slide.id+" · "+slide.prompt_hi;
+    option.textContent=devScreenName(slide);
+    option.title=slide.prompt_hi+" · "+slide.id;
     select.appendChild(option);
   });
   const label=document.createElement("span");label.className="dev-nav-lbl";
@@ -7263,7 +7289,8 @@ function buildDevNav() {
     const onLanding=!$("startGate").classList.contains("hidden");
     const i=onLanding?-1:state.idx;
     select.value=String(i);
-    label.textContent=i<0?"Landing":(i+1)+"/"+CARD.slides.length+" · "+CARD.slides[i].id;
+    label.textContent=i<0?"T1":(i+1)+"/"+CARD.slides.length+" · "+devScreenCode(CARD.slides[i]);
+    label.title=i<0?"टाइटल स्क्रीन":devScreenName(CARD.slides[i]);
   };
   const go=(i)=>{
     resetOverlays();

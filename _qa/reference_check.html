@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SwiftPAL · HI02H04_L03_S01 · आलू-मालू-कालू</title>
-<link rel="stylesheet" href="style.css?v=20261006-reference-confetti">
+<link rel="stylesheet" href="style.css?v=20261006-updated-title">
 </head>
 <body class="is-start">
 <div class="start-bg" aria-hidden="true"></div>
@@ -118,11 +118,14 @@ window.Audio = class {
  else if(['zip_story','zip_story_ready','zip_story_reading','zip_story_done'].includes(mode)){
    mount('T1');await wait(200);
    const mic=document.querySelector('.reading-mic'),line=document.querySelector('.ev-line');
+   const hand=document.getElementById('nudgeHand'),micRect=mic.getBoundingClientRect(),surfaceRect=document.querySelector('.slide-stage').getBoundingClientRect(),scale=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--scale'));
+   assert(hand.classList.contains('show')&&Math.abs(parseFloat(hand.style.left)-((micRect.left-surfaceRect.left)/scale+micRect.width/scale/2-48))<.2,'T1 instruction points hand at mic button');
    assert(mic.querySelectorAll('.mic-wave rect').length===5,'Reference five-bar meter inside mic');
    assert(getComputedStyle(mic).width==='64px'&&getComputedStyle(mic).height==='64px','Reference 64-pixel mic chip');
    assert(document.getElementById('navBtn').disabled,'Next waits for reading and sentence audio');
    if(mode!=='zip_story_ready'){
      const before=mic.getBoundingClientRect();mic.click();await wait(700);
+     assert(!hand.classList.contains('show'),'Mic tap removes instruction hand');
      document.getAnimations().filter(a=>a.constructor.name==='CSSTransition'&&mic.contains(a.effect.target)).forEach(a=>a.finish());
      assert(mic.classList.contains('p2-rec')&&getComputedStyle(mic.querySelector('.mic')).opacity==='0'&&getComputedStyle(mic.querySelector('.mic-wave')).opacity==='1','Tap changes microphone into animated white level bars');
      const after=mic.getBoundingClientRect();
@@ -182,10 +185,12 @@ window.Audio = class {
    assert(Math.abs((parseFloat(surfaceStyle.width)-8)/(parseFloat(surfaceStyle.height)-8)-1671/941)<.002,'Puzzle board preserves source image proportions');
    assert(new Set(tiles.map(t=>t.querySelector('svg').getAttribute('viewBox'))).size===4&&new Set(tiles.map(t=>t.querySelector('image').getAttribute('href'))).size===1,'Four distinct cuts from one complete image');
    assert(tiles.length===4&&tiles.every(t=>t.textContent==='?'),'Four white question-mark cards');
+   assert(document.getElementById('nudgeHand').classList.contains('show'),'Puzzle introduction shows one hand cue');
    assert(document.getElementById('navBtn').style.display==='none','No next button bypasses questions');
    if(mode!=='puzzle_cards'){
      for(const i of [2,0,3,1]){
        tiles[i].click();await wait(200);
+       assert(!document.getElementById('nudgeHand').classList.contains('show'),'Opening question removes puzzle introduction hand: '+i);
        assert(CARD.slides[state.idx].id==='PUZZLE_INTRO'&&!document.querySelector('.qp-question').hidden,'Question opens on same screen: '+i);
        assert(!tiles[i].classList.contains('unlocked'),'Question card stays covered before answer: '+i);
        if(i===2){
@@ -319,6 +324,10 @@ window.Audio = class {
    assert(bar&&!bar.hidden,'Dev mode shows bottom navigation menu');
    const select=bar.querySelector('select');
    assert(select.options.length===CARD.slides.length+1,'Menu includes landing and every page');
+   assert(select.options[0].textContent==='T1 Title Page','Title page has code and screen name');
+   const storyNames=[...select.options].filter(o=>/^T\d+ Story \d+$/.test(o.textContent));
+   assert(storyNames.length===10&&storyNames.every((o,i)=>o.textContent==='T'+(i+2)+' Story '+(i+1)),'Stories have sequential codes and names');
+   assert(['G1','Q1','P1','C1'].every(code=>[...select.options].some(o=>o.textContent.startsWith(code+' '))),'Every screen code is followed by its name');
    const jump=id=>{select.value=String(CARD.slides.findIndex(s=>s.id===id));select.dispatchEvent(new Event('change'));};
    jump('T1');await wait(200);
    assert(CARD.slides[state.idx].id==='T1'&&!document.querySelector('.reading-mic').disabled,'First story instruction finishes before mic enables');
@@ -326,8 +335,8 @@ window.Audio = class {
    assert(!isPlaying&&!document.querySelector('.reading-mic').disabled,'Later story pages do not repeat reading instruction');
    const stories=CARD.slides.filter(s=>s.type==='STORY_READALONG');
    assert(stories[0].audio.prompt==='vo_review_reading_instruction'&&stories.slice(1).every(s=>!s.audio.prompt),'Reading instruction authored only on first page');
-   jump('PT2');await wait(100);jump('P2');await wait(2600);
-   assert(CARD.slides[state.idx].id==='P2','Jumping out of gate cancels old gate navigation');
+   jump('PT2');await wait(100);jump('PUZZLE_INTRO');await wait(2600);
+   assert(CARD.slides[state.idx].id==='PUZZLE_INTRO','Jumping out of gate cancels old gate navigation');
    jump('CEL');await wait(200);jump('T2');
    assert(!document.getElementById('endScreen').classList.contains('show'),'Jumping out of end screen clears overlay');
    bar.querySelector('[aria-label="Landing"]').click();
