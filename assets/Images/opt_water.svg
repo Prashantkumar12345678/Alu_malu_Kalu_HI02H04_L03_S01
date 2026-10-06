@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160">
+<defs><linearGradient id="river" x1="0" y1="0" x2="0.3" y2="1"><stop stop-color="#91E1FF"/><stop offset="1" stop-color="#329FE0"/></linearGradient></defs>
+<path d="M17 28Q44 12 81 22T145 24L150 140Q81 152 10 139Z" fill="#A9D778" stroke="#609B4B" stroke-width="3" stroke-linejoin="round"/>
+<path d="M78 21C62 39 117 42 103 64S42 82 55 103S121 120 127 143L32 143C30 121 11 104 26 85S84 66 79 54S58 33 66 20Z" fill="url(#river)" stroke="#388EBC" stroke-width="2.5" stroke-linejoin="round"/>
+<g fill="none" stroke="#DCF7FF" stroke-width="4" stroke-linecap="round"><path d="M77 39q10 4 19 1"/><path d="M72 73q-8 5-17 5"/><path d="M37 96q8-4 17-1"/><path d="M61 116q13 7 25 3"/><path d="M53 136q16 5 32 1"/></g>
+<g fill="#E1D3B5" stroke="#A99D82" stroke-width="2"><path d="M111 83q12-17 23-3q3 11-11 13q-15 1-12-10Z"/><path d="M24 49q9-12 16-3q5 9-8 11q-12 1-8-8Z"/><path d="M130 120q7-10 14-3q4 8-7 10q-10 0-7-7Z"/></g>
+<g fill="none" stroke="#508F3F" stroke-width="3" stroke-linecap="round"><path d="M119 53v-14m0 14-6-9m6 9 6-11"/><path d="M18 126v-14m0 14-6-9m6 9 6-11"/><path d="M144 68v-12m0 12-5-8"/></g>
+</svg>

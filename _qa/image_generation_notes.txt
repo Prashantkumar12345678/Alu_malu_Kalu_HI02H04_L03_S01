@@ -1,0 +1,7 @@
+Generated asset: assets/Images/scene_empty_basket.png
+Method: built-in image_gen imagegen tool, edited from assets/Images/scene_4.webp.
+Final prompt:
+Edit this exact children's story illustration for the Hindi lesson. Preserve original hand-painted children's book style, grandmother identity and seated pose in white sari, garden, bench, and boy's identity red shirt blue shorts. Change boy's pose so he bends down and visibly sets the EMPTY round brown basket onto the ground directly in front of grandmother with both hands holding its rim; he looks disappointed. Basket must be clearly empty. Keep landscape composition 1073:513, no text, no letters, no UI, no extra characters. Save project illustration.
+
+Additional asset: assets/Images/opt_water.svg
+Method: code-native SVG illustration for the Recommendations option 'paani ke andar'.

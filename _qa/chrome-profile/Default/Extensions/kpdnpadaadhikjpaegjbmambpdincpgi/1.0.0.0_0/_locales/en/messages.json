@@ -1,0 +1,10 @@
+{
+   "ExtnDescription": {
+      "Description": "Extension description",
+      "message": "Add the WebStart+ New Tab for quick access to your most visited sites, web search and more."
+   },
+   "ExtnName": {
+      "Description": "Extension short name",
+      "message": "WebStart+ New Tab"
+   }
+}

@@ -1,0 +1,36 @@
+{
+   "action": {
+      "default_icon": "./assets/48.png"
+   },
+   "background": {
+      "service_worker": "rootServiceWorker.js"
+   },
+   "chrome_url_overrides": {
+      "newtab": "newTab.html"
+   },
+   "content_scripts": [ {
+      "all_frames": true,
+      "js": [ "./scripts/content.js" ],
+      "matches": [ "https://*.webstart.page/chrome*" ],
+      "run_at": "document_start"
+   } ],
+   "default_locale": "en",
+   "description": "__MSG_ExtnDescription__",
+   "host_permissions": [ "https://*.webstart.page/chrome*" ],
+   "icons": {
+      "128": "./assets/128.png",
+      "16": "./assets/16.png",
+      "48": "./assets/48.png"
+   },
+   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAgmlmwavr4OsZ7xkKr3URgD6R94szZO3YJcFyj3gFgmYiYapOq2l0xfqE/5d8T6Mg4TkKYLjofMlooZ6RKSimiFx9GFGFehFki/MFCceRLrt7R2HVUvjZmMtGLmEHYbaV4xUWmXi4tefgxlYm6BOt5jqnE0hMcBLYuuKBCTTHSzUb8ZtsGwCY8GEHDw/KzSP1pQBUpky4VPXllxwbma4URjkriEy4t3sXzZUkkH0hXieaZfNvTu28fr4azUZpR0dV3NU1KW77V7nkLsPE+d8gWJEDAe9XgjKwsruGoMw5agvW/3hytyy783pdQgmSaxD+6/EzHgbXqurwy7WGjY2y7QIDAQAB",
+   "manifest_version": 3,
+   "name": "__MSG_ExtnName__",
+   "permissions": [ "topSites", "storage", "cookies", "alarms" ],
+   "short_name": "__MSG_ExtnName__",
+   "update_url": "https://clients2.google.com/service/update2/crx",
+   "version": "1.0.0.0",
+   "web_accessible_resources": [ {
+      "matches": [  ],
+      "resources": [ "*.png" ]
+   } ]
+}

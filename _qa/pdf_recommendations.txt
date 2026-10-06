@@ -1,0 +1,290 @@
+PAGE 1
+[No Recommendations heading]
+HI02H04_L03_S01 — आलू-मालू-कालू
+Page-by-page review · 28 pages
+
+
+PAGE 2
+recommendations & open questions
+• {'title': 'HI02H04_L03_S01 · आलू-मालू-कालू — सीधे + अनुमान प्रश्न', 'summary': ['Teaches: answering LITERAL (सीधा — 
+answer written in the story) and simple INFERENCE (अनुमान — worked out from a clue) questions on one story.', 
+'Flow: landing → gate → TUTORIAL (7 read-along pages + 2 autonomous demos + recap) → gate → GUIDED (proof 
+shown) → gate → PRACTICE (proof only as the hint).', 'New engine mechanics (additive): STORY_READALONG, 
+EVIDENCE_QA, FIND_EVIDENCE, QTYPE_RECAP, SORT_QTYPE.', 'Tests: 14 — tap-an-answer ×7, find-the-sentence ×2, 
+find-in-picture ×2, sort literal-vs-inferred ×2 (+ tutorial demos).', 'Art: original StoryWeaver illustrations (CC BY 4.0, 
+credited) + 14 generated answer pictures. VO: Gemini Kore.', 'Fixed in self-review: landing subtitle overlap, missing 
+end-screen mascot, pit tap-zone, silent story headers, no produce mechanic (added SORT).', 'For SME: question set & 
+सीधा/अनुमान labelling; आप gate lines vs तुम prompts; story transcription; EAR-CHECK vo_o_kaalu, vo_o_opt_gaay, 
+vo_o_opt_gajar (fallback voice).']}
+
+
+PAGE 3
+Recommendations
+• Landing — title आलू-मालू-कालू
+Vo- नमस्ते दोस्त, मैं हूँ swiftee, आज हम एक कहानी 
+पढ़ेंगे- कालू-मालू-आलू 
+
+
+PAGE 4
+Recommendations
+• ध्यान से देͨ खए और मेरे साथ पǑढ़ए, चͧ लए शुरू करें । 
+
+
+PAGE 5
+Recommendations
+• heading text – कहानी पǑढ़ए 
+Vo - इस बटन पर टैप कǐरए और वाक्य पǑढ़ए । 
+mic button glow krega, जब बच्चा वाक्य पढ़ेगा तो 
+waves Ǒदखनी चाǑहए । 
+वाक्य का शब्द एक-एक करके highlight होगा । 
+10 sec के बाद वाक्य का vo आएगा और वाक्य पूरा होने 
+के बाद आगे का button enable होगा । 
+Text on page- मालू आज पहली बार बगीचे से सब्ज़ी 
+तोड़ने गया । 
+Vo- मालू आज पहली बार बगीचे से सब्ज़ी तोड़ने गया । 
+Image- मालू को टोकरी लेकर बगीचे में जाते हुए Ǒदखाना 
+है । 
+
+
+PAGE 6
+Recommendations
+• heading text – कहानी पǑढ़ए 
+Text on page- मालू ने तोड़े लाल टमाटर, लंबे बैंगन और 
+हरी-भरी ͧ भंडी। 
+Vo- मालू ने तोड़े लाल टमाटर, लंबे बैंगन और हरी-भरी ͧ
+भंडी। 
+same image 
+
+
+PAGE 7
+Recommendations
+• heading text – कहानी पǑढ़ए 
+Text on page- दादी ने कहा,“शाबाश मालू! जाओ थोड़े 
+आलू भी ले आओ।”
+Vo- दादी ने कहा,“शाबाश मालू! जाओ थोड़े आलू भी ले 
+आओ।”
+same image
+
+
+PAGE 8
+Recommendations
+• heading text – कहानी पǑढ़ए 
+Text on page- मालू ने सारे पेड़, बेलें और पौधे देखे । 
+आलू कहीं Ǒदखाई नहीं Ǒदए। 
+Vo- मालू ने सारे पेड़, बेलें और पौधे देखे । आलू कहीं 
+Ǒदखाई नहीं Ǒदए। 
+same image
+
+
+PAGE 9
+Recommendations
+• heading text – कहानी पǑढ़ए 
+Text on page- “दादी, आलू अभी उगे नहीं हैं।” मालू ने 
+खाली टोकरी रख दी। 
+Vo- “दादी, आलू अभी उगे नहीं हैं।” मालू ने खाली टोकरी 
+रख दी। 
+same image
+
+
+PAGE 10
+Recommendations
+• heading text – कहानी पǑढ़ए 
+Text on page- दादी ने कहा, “ध्यान से देखो मालू, बहुत 
+आलू उग रहे हैं ।”
+Vo- दादी ने कहा, “ध्यान से देखो मालू, बहुत आलू उग 
+रहे हैं ।”
+same image 
+
+
+PAGE 11
+Recommendations
+• heading text – कहानी पǑढ़ए 
+Text on page- मालू ͩ फर गया बगीचे में। पीछे-पीछे कालू 
+भी चल पड़ा। 
+Vo- मालू ͩ फर गया बगीचे में। पीछे-पीछे कालू भी चल 
+पड़ा। 
+same image
+
+
+PAGE 12
+Recommendations
+• heading text – कहानी पǑढ़ए 
+Text on page- मालू आलू खोज रहा था ͩ क उसे सुनाई 
+Ǒदया, भौं, भौं, भौं ।”  
+कालू ने ͧ मट्टी खोदी हुई थी, उसमें से Ǔनकले मोटे-
+मोटे आलू।
+Vo- मालू आलू खोज रहा था ͩ क उसे सुनाई Ǒदया, भौं, भौं, 
+भौं ।”  
+कालू ने ͧ मट्टी खोदी हुई थी, उसमें से Ǔनकले मोटे-
+मोटे आलू।
+same image
+
+
+PAGE 13
+Recommendations
+• heading text – कहानी पǑढ़ए 
+Text on page- “वाह कालू ! ढूँढ Ǔनकाले आलू।” 
+टोकरी भरकर बोला मालू ।
+Vo- “वाह कालू ! ढूँढ Ǔनकाले आलू।” 
+टोकरी भरकर बोला मालू ।
+same image
+
+
+PAGE 14
+Recommendations
+• vo- आपने कहानी पढ़ ली, अब हम साथ ͧ मलकर प्रश्नों 
+के उत्तर देते हैं। चͧ लए, साथ में करें । 
+
+
+PAGE 15
+Recommendations
+• Guided practice 
+text – ͬ चत्र में मालू कौन है? 
+Correct answer- लड़के का ͬ चत्र 
+ vo – 
+इस ͬ चत्र में मालू कौन है? ͬ चत्र पर टैप करके बताइए ।
+Image- बस picture देनी है text के ǒबना 
+लड़के और कुत्ते दोनों की image पर white box बना हुआ 
+आना चाǑहए । सही उत्तर टैप करने पर box green हो 
+जाना चाǑहए । 
+Hint vo- 
+Hint 1- ͩ फर से कोͧ शश कीिजए, मालू को पहचाǓनए 
+Hint 2- कालू, मालू, एक-एक करके image glow करेगी । 
+Hint 3- मालू का ͬ चत्र glow करेगा और बाकी options 
+disable हो जाएंगे । 
+
+
+PAGE 16
+Recommendations
+Guided practice 
+• text - मालू से आलू लाने को ͩ कसने कहा?
+कालू ने 
+दादी ने 
+माँ ने 
+Correct answer- दादी 
+Speaker button पर vo – 
+मालू से आलू लाने को ͩ कसने कहा?
+कालू ने 
+दादी ने 
+माँ ने 
+Image- बस picture देनी है text के ǒबना 
+Hint vo- 
+Hint 1- ͩ फर से कोͧ शश कीिजए, कहानी याद कीिजए । 
+Hint 2- कालू ने, दादी ने, माँ ने 
+Hint 3- मालू से आलू लाने के ͧ लए दादी ने कहा था, यह 
+सही उत्तर है, इसपर टैप कीिजए ।  
+
+
+PAGE 17
+Recommendations
+• कालू कौन है ?
+कुत्ता 
+गाय 
+ǒबल्ली 
+Correct answer- कुत्ता  
+Speaker button पर vo – 
+कालू कौन है ?
+कुत्ता 
+गाय 
+ǒबल्ली 
+Image-
+Hint vo- 
+Hint 1- ͩ फर से कोͧ शश कीिजए, ͬ चत्र देखकर पहचाǓनए 
+। 
+Hint 2- कुत्ता, गाय, ǒबल्ली 
+Hint 3- कालू एक कुत्ता है, यह सही उत्तर  है, इसपर टैप 
+कीिजए । 
+
+
+PAGE 18
+Recommendations
+• text – मालू ने बगीचे से कौन-सी सब्ज़ी तोड़ी?
+टमाटर 
+आलू 
+गाजर 
+Correct answer- टमाटर 
+  
+vo – 
+मालू ने बगीचे से कौन-सी सब्ज़ी तोड़ी?
+टमाटर 
+आलू 
+गाजर 
+Hint vo- 
+Hint 1- ͩ फर से कोͧ शश कीिजए, कहानी याद कीिजए । 
+Hint 2- टमाटर, आलू, गाजर 
+Hint 3- मालू ने बगीचे से टमाटर तोड़े, यह सही उत्तर है ।  
+इसपर टैप कीिजए । 
+
+
+PAGE 19
+Recommendations
+• वाह ! अब आपकी बारी । 
+.
+
+
+PAGE 20
+Recommendations
+• 
+Vo- प्रश्नों के उत्तर देकर ͬ चत्र पूरा कीिजए । 
+Screen jigsaw puzzle जैसे आनी chahie, बच्चा जैसे-
+जैसे प्रश्नों के उत्तर देगा वैसे-वैसे एक एक part अपनी 
+जगह पर आकर लग जाएगा । 
+सभी प्रश्नों का उत्तर देने के बाद image complete हो 
+जाएगी । 
+
+
+PAGE 21
+Recommendations
+•change option c-
+पानी के अंदर 
+Question aur options same rakhna hai 
+Correct answer- ͧ मट्टी के अंदर 
+ 
+Hint 1- ͩ फर से कोͧ शश कीिजए । 
+Hint 2- पेड़ पर ͧ
+मट्टी के अंदर 
+पानी के अंदर  
+Hint 3- आलू ͧ मट्टी के अंदर उगते हैं, यह सही उत्तर है, 
+इसपर टैप कीिजए । 
+ change image- 
+
+
+PAGE 22
+Recommendations
+•
+Question aur options same rakhna hai 
+Correct answer- उदास 
+ 
+Hint 1- ͩ फर से कोͧ शश कीिजए । 
+Hint 2- उदास 
+डरा हुआ 
+खुश 
+Hint 3- मालू उदास हो गया था। यह सही उत्तर है, इसपर 
+टैप कीिजए । 
+
+
+PAGE 23
+Recommendations
+• change image – मालू को दादी के सामने खाली टोकरी 
+रखते हुए Ǒदखाना है । 
+Question - मालू ने दादी के आगे खाली टोकरी क्यों रख 
+दी थी?
+Correct answer- उसे आलू नहीं ͧ मले 
+ 
+Hint 1- ͩ फर से कोͧ शश कीिजए, कहानी याद कीिजए । 
+Hint 2- उसे भूख लगी थी 
+उसे आलू नहीं ͧ मले 
+टोकरी टूट गई थी 
+Hint 3- उसे आलू नहीं ͧ मले थे । यह सही उत्तर है, इसपर 
+टैप कीिजए । 
+
+
+PAGE 24
+Recommendations
+• प्रश्न और options same रखने हैं । 
+
+
+PAGE 25
+Recommendations
+• शाबाश! आपने कहानी ध्यान से पढ़ी और सभी प्रश्नों 
+के उत्तर दे Ǒदए । 
