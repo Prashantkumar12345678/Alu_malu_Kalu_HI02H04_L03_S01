@@ -1335,7 +1335,6 @@ body.is-start .sg-mascot{transform:none;animation:none;}
 .read-with-mic .ev-passage.big .story-caption{position:relative;left:auto;top:auto;flex:0 0 110px;display:flex;align-items:center;justify-content:center;width:539px;max-width:539px;height:110px;min-height:110px;max-height:110px;padding:10px 26px;border:3px solid #FFFFFF;border-radius:26px;background:#FFFFFF;box-shadow:0 5px 0 rgba(11,42,90,.10),0 10px 26px rgba(11,42,90,.12);font-size:26px;font-weight:600;line-height:42px;text-align:center;}
 .story-read-layout .ev-word{transition:color .15s ease,transform .15s ease;}
 .story-read-layout .ev-word.ev-word-now{color:#FF8A00;font-weight:800;transform:scale(1.10);}
-.story-read-layout .verse-done .ev-word-key{color:#FF8A00;font-weight:800;}
 .stage.story-reading .reading-mic{left:auto;right:calc(100% + 15px);top:50%;margin-top:-32px;transform:none;bottom:auto;width:64px;height:64px;border:0;padding:0;background:transparent;border-radius:0;box-shadow:none;filter:drop-shadow(0 3px 6px rgba(0,0,0,.22));animation:none;}
 .stage.story-reading .reading-mic svg{display:block;width:100%;height:100%;overflow:visible;}
 .reading-mic svg > g[filter]{filter:none;}

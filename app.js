@@ -1744,11 +1744,6 @@ function mountReadingPractice(host, slide) {
   wrap.appendChild(card);
   host.appendChild(wrap);
   const line = card._lines[0];
-  const keyWords = slide.data.highlight_words || ["मालू", "कालू", "दादी", "आलू"];
-  line.querySelectorAll(".ev-word").forEach(word => {
-    const plain = word.textContent.replace(/[।,!?“”"'।]/g, "");
-    word.classList.toggle("ev-word-key", keyWords.includes(plain));
-  });
   const mic = document.createElement("button");
   mic.className = "reading-mic";
   mic.type = "button";
@@ -1762,7 +1757,6 @@ function mountReadingPractice(host, slide) {
     if(!current() || mode==="narrating")return;
     clearTimeout(timer);stopWords();stopNudge();
     mode="narrating";
-    card.classList.remove("verse-done");
     mic.classList.remove("p2-rec");
     mic.classList.add("p2-rec-done");
     mic.disabled=true;
@@ -1770,7 +1764,7 @@ function mountReadingPractice(host, slide) {
     setNavActive(false);
     play(line._src,()=>{
       if(!current())return;
-      stopWords();mode="done";card.classList.add("verse-done");setNavActive(true);
+      stopWords();mode="done";setNavActive(true);
     });
     stopWords=evWordKaraoke(line);
   };

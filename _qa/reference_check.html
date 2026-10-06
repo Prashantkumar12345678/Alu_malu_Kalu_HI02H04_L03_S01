@@ -137,6 +137,7 @@ window.Audio = class {
        await wait(1200);
        assert(mic.disabled&&mic.classList.contains('p2-rec-done')&&!mic.classList.contains('p2-rec'),'Mic returns grey and stays disabled after reading');
        assert(!document.getElementById('navBtn').disabled,'Narrated sentence enables next');
+       assert([...line.querySelectorAll('.ev-word')].every(word=>!word.classList.contains('ev-word-now')&&getComputedStyle(word).color==='rgb(11, 61, 140)'),'Finished sentence returns every word to navy');
        const log=window.qaAudioLog.length;mic.click();await wait(100);
        assert(window.qaAudioLog.length===log,'Finished mic cannot restart reading');
      }
