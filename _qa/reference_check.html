@@ -121,11 +121,13 @@ window.Audio = class {
    const hand=document.getElementById('nudgeHand'),micRect=mic.getBoundingClientRect(),surfaceRect=document.querySelector('.slide-stage').getBoundingClientRect(),scale=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--scale'));
    assert(hand.classList.contains('show')&&Math.abs(parseFloat(hand.style.left)-((micRect.left-surfaceRect.left)/scale+micRect.width/scale/2-48))<.2,'T1 instruction points hand at mic button');
    assert(mic.querySelectorAll('.mic-wave rect').length===5,'Reference five-bar meter inside mic');
+   assert(mic.getAnimations().some(a=>a.animationName==='readingMicPulse'),'Ready mic gently pulses');
    assert(getComputedStyle(mic).width==='64px'&&getComputedStyle(mic).height==='64px','Reference 64-pixel mic chip');
    assert(document.getElementById('navBtn').disabled,'Next waits for reading and sentence audio');
    if(mode!=='zip_story_ready'){
      const before=mic.getBoundingClientRect();mic.click();await wait(700);
      assert(!hand.classList.contains('show'),'Mic tap removes instruction hand');
+     assert(!mic.getAnimations().some(a=>a.animationName==='readingMicPulse'),'Mic pulse stops during reading');
      document.getAnimations().filter(a=>a.constructor.name==='CSSTransition'&&mic.contains(a.effect.target)).forEach(a=>a.finish());
      assert(mic.classList.contains('p2-rec')&&getComputedStyle(mic.querySelector('.mic')).opacity==='0'&&getComputedStyle(mic.querySelector('.mic-wave')).opacity==='1','Tap changes microphone into animated white level bars');
      const after=mic.getBoundingClientRect();

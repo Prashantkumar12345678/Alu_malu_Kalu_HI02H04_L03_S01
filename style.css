@@ -1287,8 +1287,12 @@ body.is-start .sg-mascot{transform:none;animation:none;}
 .qp-slot.filled{border:0;opacity:1;}
 .question-puzzle.complete .qp-cards{display:none;}
 .question-puzzle.complete .qp-board{border-color:var(--correct);}
-.qp-question{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;}
-.qp-question-text{width:calc(100% - 80px);padding:22px 28px;border:2px solid #C5DFF3;border-radius:24px;background:#FFFFFF;color:var(--navy);font-family:var(--font-hi);font-size:30px;font-weight:600;line-height:1.4;text-align:center;box-shadow:0 6px 16px rgba(11,61,140,.08);}
+.qp-question{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:34px;padding-bottom:30px;}
+/* puzzle question: plain heading text (deliberately NOT button-like) with a short accent line in the piece's colour */
+.qp-qcard{display:flex;flex-direction:column;align-items:center;gap:14px;width:1104px;}
+.qp-qcard::after{content:"";width:96px;height:8px;border-radius:8px;background:var(--qc-dark);}
+.qp-question-text{width:auto;max-width:100%;padding:0;border:0;background:transparent;box-shadow:none;color:#0B3D8C;font-family:var(--font-hi);font-size:42px;font-weight:800;line-height:1.3;text-align:center;}
+
 .qp-options{width:100%;}
 .qp-options .q-row{gap:0;}
 .qp-options .opt-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px;width:100%;}
@@ -1297,11 +1301,18 @@ body.is-start .sg-mascot{transform:none;animation:none;}
 .qp-options .ev-opt-lbl{font-size:30px;text-align:center;}
 /* One board for question reveals and assembly; all crops share the source image's proportions. */
 .qp-surface{--qp-height:478.6655px;position:relative;width:858px;height:calc(var(--qp-height) + 8px);border:4px solid transparent;border-radius:0;background:transparent;box-shadow:none;flex:none;}
-.qp-tile .qp-mark{font-family:Arial,sans-serif;font-size:78px;font-weight:700;fill:#173B83;stroke:#FFFFFF;stroke-width:5px;stroke-linejoin:round;paint-order:stroke fill;filter:drop-shadow(0 3px 0 rgba(23,59,131,.12));}
-.qp-tile:nth-child(1) .qp-piece-base{fill:#B897FF;stroke:#8257DC;}
-.qp-tile:nth-child(2) .qp-piece-base{fill:#FFD451;stroke:#E6AF20;}
-.qp-tile:nth-child(3) .qp-piece-base{fill:#70CFFF;stroke:#329FE0;}
-.qp-tile:nth-child(4) .qp-piece-base{fill:#FFBC7D;stroke:#E79A49;}
+/* closed puzzle pieces: colours live in the svg (app.js PIECE_THEMES); the "?" badge bobs, sparkles twinkle */
+.qp-tile .qp-q{font-family:var(--font-hi),Arial,sans-serif;font-size:96px;font-weight:800;}
+.qp-tile .qp-mark{transform-box:fill-box;transform-origin:50% 50%;animation:qpBob 2.6s ease-in-out var(--qp-d,0s) infinite;}
+.qp-tile .qp-spark{transform-box:fill-box;transform-origin:50% 50%;animation:qpTwinkle 1.8s ease-in-out infinite;}
+.qp-tile .qp-spark.s2{animation-delay:-.6s;}
+.qp-tile .qp-spark.s3{animation-delay:-1.2s;}
+.qp-tile:not(.unlocked){transition:transform .18s ease,filter .18s ease;}
+.qp-tile:not(.unlocked):hover{z-index:3;transform:translateY(-4px);filter:drop-shadow(0 10px 12px rgba(11,61,140,.25)) brightness(1.04);}
+.qp-tile:not(.unlocked):active{transform:translateY(1px) scale(.99);}
+@keyframes qpBob{0%,100%{transform:translateY(0) rotate(-4deg);}50%{transform:translateY(-10px) rotate(4deg);}}
+@keyframes qpTwinkle{0%,100%{opacity:.25;transform:scale(.6);}50%{opacity:1;transform:scale(1.15);}}
+@media(prefers-reduced-motion:reduce){.qp-tile .qp-mark,.qp-tile .qp-spark{animation:none;}}
 .qp-surface .qp-cards{position:absolute;inset:0;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr);gap:0;width:100%;height:100%;border:0;border-radius:20px;background:transparent;box-shadow:none;overflow:visible;z-index:2;}
 .qp-surface .qp-tile{width:100%;height:100%;}
 .question-puzzle.assembling .qp-surface .qp-cards{display:block;}
@@ -1337,6 +1348,8 @@ body.is-start .sg-mascot{transform:none;animation:none;}
 .story-read-layout .ev-word.ev-word-now{color:#FF8A00;font-weight:800;transform:scale(1.10);}
 .stage.story-reading .reading-mic{left:auto;right:calc(100% + 15px);top:50%;margin-top:-32px;transform:none;bottom:auto;width:64px;height:64px;border:0;padding:0;background:transparent;border-radius:0;box-shadow:none;filter:drop-shadow(0 3px 6px rgba(0,0,0,.22));animation:none;}
 .stage.story-reading .reading-mic svg{display:block;width:100%;height:100%;overflow:visible;}
+.stage.story-reading .reading-mic:not(.p2-rec):not(.p2-rec-done):not(:disabled){animation:readingMicPulse 1.4s ease-in-out infinite;}
+@keyframes readingMicPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
 .reading-mic svg > g[filter]{filter:none;}
 .reading-mic svg .mic{transition:opacity .45s ease;}
 .reading-mic svg .mic-wave{opacity:0;transition:opacity .35s ease;}
@@ -1363,7 +1376,7 @@ body.is-start .sg-mascot{transform:none;animation:none;}
 .reading-prompt{flex-basis:48px;font-size:32px;line-height:38px;}
 .read-with-mic .ev-passage.big .story-frame{flex-basis:295px;min-height:295px;width:525px;height:295px;max-width:525px;max-height:295px;}
 .read-with-mic .ev-passage.big .story-img{width:517px;height:287px;}
-.read-with-mic .ev-passage.big .story-caption{flex-basis:80px;width:520px;max-width:520px;height:80px;min-height:80px;max-height:80px;padding:5px 20px;font-weight:650;line-height:31.2px;}
+.read-with-mic .ev-passage.big .story-caption{flex-basis:80px;width:520px;max-width:520px;height:80px;min-height:80px;max-height:80px;padding:5px 20px;font-weight:650;line-height:31.2px;word-spacing:4px;}
 .stage.story-reading .nav-btn{top:454px;}
 .stage.story-reading .nav-btn::before,.stage.story-reading .nav-btn::after{inset:-17px;}
 @media(prefers-reduced-motion:reduce){
@@ -1434,3 +1447,146 @@ body.is-start .sg-mascot{transform:none;animation:none;}
   100%{transform:rotateZ(var(--tilt)) rotateY(var(--yaw)) rotateX(180deg);}
 }
 
+
+/* ===== [REF-L02-LAYOUT] Story page, question pictures and answer buttons matched to HI02H04_L02_S01 (alpha).
+   Values are the reference's measured pixels on the 1333x750 stage. ===== */
+.stage.story-reading,.stage.question-layout{background:#F6FBFF;}
+/* --- story page: header band + mascot circle, ruled blue card, yellow-framed picture, blue sentence bar --- */
+.stage.story-reading .stage-inner{left:0;right:0;top:0;bottom:0;border:0;border-radius:0;background:#F6FBFF;background-image:none;box-shadow:none;overflow:visible;}
+.stage.story-reading .header-row{display:block;height:140px;}
+.stage.story-reading .prompt-band{top:42px;left:35px;width:1265px;height:87px;padding:0 10px 0 146px;border:4px solid #FFFFFF;border-radius:999px;background:#CBE8FF;box-shadow:none;filter:drop-shadow(0 4px 2px rgba(0,0,0,.25));}
+.stage.story-reading .prompt-band .prompt-text{font-size:33.3px;line-height:1.15;font-weight:700;color:#012F76;letter-spacing:0;}
+.stage.story-reading .sw-buddy{display:block;left:31px;top:23px;bottom:auto;width:121px;height:125px;box-sizing:border-box;border:5px solid #FDF9E9;border-radius:50%;background:#61D0FE;overflow:hidden;box-shadow:none;filter:drop-shadow(0 4px 2px rgba(0,0,0,.25));z-index:42;animation:none;}
+.stage.story-reading .sw-buddy img{width:100%;height:100%;object-fit:cover;}
+.stage.story-reading .audio-chip{display:none !important;}
+.stage.story-reading .slide-stage{padding:0;overflow:visible;}
+.read-with-mic{display:block;}
+.read-with-mic .reading-prompt{display:none;}
+.read-with-mic .ev-passage.big{position:absolute;left:101px;top:38px;width:1133px;height:529px;box-sizing:border-box;display:block;margin:0;padding:0;max-width:none;
+  border:12px solid #5A8FEE;border-radius:41.66px;background-color:#F2F7FA;
+  background-image:linear-gradient(to right,#D4E0FE 1.49px,transparent 1.49px),linear-gradient(to bottom,#D4E0FE 1.49px,transparent 1.49px);
+  background-size:46.67px 46.67px;box-shadow:0 8px 8.8px rgba(0,0,0,.25);overflow:visible;}
+.read-with-mic .ev-passage.big .story-frame{position:absolute;left:310px;top:18px;flex:none;width:487px;height:254px;min-height:0;max-width:none;max-height:none;box-sizing:border-box;
+  padding:0;margin:0;border:4px solid #FCB717;border-radius:20.83px;background:#000;box-shadow:none;overflow:hidden;display:block;}
+.read-with-mic .ev-passage.big .story-img{position:static;width:100%;height:100%;max-width:none;object-fit:cover;border:0;border-radius:0;display:block;}
+.read-with-mic .ev-passage.big .story-caption{position:absolute;left:309px;top:305px;flex:none;width:491px;max-width:none;height:auto;min-height:74px;max-height:none;box-sizing:border-box;
+  margin:0;padding:4px 12.5px;display:flex;align-items:center;justify-content:center;text-align:center;
+  border:4px solid #1987FC;border-radius:20.83px;background:#FFFFFF;box-shadow:none;
+  font-family:var(--font-hi);font-size:33.3px;font-weight:700;line-height:1.15;word-spacing:0;color:#012F76;white-space:nowrap;overflow:visible;}
+.read-with-mic .ev-passage.big .story-caption{padding:4px 20px;}
+.read-with-mic .ev-passage.big .story-caption.wrap{white-space:normal;line-height:1.12;padding:2px 18px;}
+.read-with-mic .ev-passage.big .story-caption .ev-line{color:#012F76;}
+/* the mic chip sits left of the bar, as the reference's speaker chip does (visible disc 57px, centre 354,528 on the stage) */
+.stage.story-reading .reading-mic{left:-104px;right:auto;top:50%;margin-top:-34px;width:66px;height:64px;}
+.stage.story-reading .reading-mic svg{width:66px;height:64px;}
+/* आगे बढ़ें: same art, centred under the card at the reference's height */
+.stage.story-reading .nav-btn{top:596px;}
+
+/* --- question pages: header band like the reference --- */
+.stage.question-layout .prompt-band{top:46px;left:77px;width:1215px;height:84px;padding:0 10px 0 96px;border:3px solid #B7DCFB;background:#DCEEFF;box-shadow:0 3px 0 rgba(11,61,140,.05);}
+.stage.question-layout .prompt-band .prompt-text{font-size:32px;line-height:1.15;font-weight:800;color:#0B3D8C;}
+.stage.question-layout.reference-question .sw-buddy,.stage.question-layout .sw-buddy{left:17px;top:18px;width:118px;height:118px;box-sizing:border-box;background:#9DDBF5;border:4px solid #FFFFFF;box-shadow:0 6px 14px rgba(0,47,118,.2);}
+/* picture above the answers: yellow outline, rounded */
+.ev-qa.image-above-options .ev-passage{top:8px;width:560px;height:315px;border-radius:26px;box-shadow:none;outline:4px solid #FCD86B;overflow:hidden;background:#FFFFFF;}
+.ev-qa.image-above-options .ev-pic{border-radius:26px;}
+.ev-qa.image-above-options .ev-img{object-fit:cover;}
+.ev-qa.image-above-options .ev-right{top:394px;}
+/* answer buttons: white pill, blue ring, three across */
+.ev-qa.image-above-options .opt-grid{grid-template-columns:repeat(3,344px);gap:36px;width:1104px;max-width:1104px;}
+.ev-qa.image-above-options .opt-grid.cols-2{grid-template-columns:repeat(2,344px);width:724px;max-width:724px;}
+.ev-qa.image-above-options .opt-cell,.stage.thm-toybox .ev-qa.image-above-options .opt-cell,
+.qp-options .opt-cell,.stage.thm-toybox .qp-options .opt-cell{width:auto;height:auto;min-height:78px;box-sizing:border-box;padding:10px 12px;gap:10px;
+  border:3px solid #386AF6;border-radius:18px;background:#FFFFFF;box-shadow:0 4px 14px rgba(11,42,90,.10);}
+.ev-qa.image-above-options .ev-opt-lbl,.qp-options .ev-opt-lbl{font-size:28px;font-weight:800;line-height:1.2;color:#0B3D8C;}
+.ev-qa.image-above-options .ev-opt-img{width:46px;height:54px;}
+.qp-options .opt-grid{grid-template-columns:repeat(3,344px);gap:36px;width:1104px;margin:0 auto;}
+.ev-qa.image-above-options .opt-cell.correct,.stage.thm-toybox .ev-qa.image-above-options .opt-cell.correct,
+.qp-options .opt-cell.correct,.stage.thm-toybox .qp-options .opt-cell.correct{border-color:var(--correct);}
+/* find-in-picture: blue-framed scene */
+.stage.question-layout .tis-scene{padding-top:43px;}
+.stage.question-layout .tis-frame{width:940px;height:529px;border:4px solid #386AF6;border-radius:20.83px;box-shadow:none;background:#000;}
+/* puzzle answers line up under the question card */
+.qp-options{display:flex;justify-content:center;}
+.qp-options .q-row{width:1104px;margin:0;padding:0;justify-content:center;}
+.qp-options .opt-grid{margin:0;}
+/* puzzle answers: chunky 3D buttons that clearly invite a tap */
+.qp-options .opt-cell,.stage.thm-toybox .qp-options .opt-cell{cursor:pointer;border:3px solid #386AF6;background:#FFFFFF;
+  box-shadow:0 7px 0 #2A55D0,0 12px 18px rgba(11,42,90,.16);transition:transform .12s ease,box-shadow .12s ease;}
+.qp-options .opt-cell:hover{transform:translateY(-3px);box-shadow:0 10px 0 #2A55D0,0 16px 22px rgba(11,42,90,.18);}
+.qp-options .opt-cell:active{transform:translateY(5px);box-shadow:0 2px 0 #2A55D0,0 4px 8px rgba(11,42,90,.14);}
+.qp-options .opt-cell.correct,.stage.thm-toybox .qp-options .opt-cell.correct{border-color:var(--correct);box-shadow:0 7px 0 #149C3C,0 12px 18px rgba(11,42,90,.16);}
+.qp-options .opt-cell.faded{box-shadow:none;}
+/* an opened piece sits in a mixed-up slot until assembled, so its tab can poke past the board's outer edge;
+   keep everything inside the board */
+.qp-surface .qp-cards,.question-puzzle.assembling .qp-surface .qp-cards{overflow:hidden;}
+/* puzzle piece reveal: the opened piece comes out of a blur with a light shine sweeping across */
+.qp-tile.revealing{z-index:4;animation:qpReveal 2s ease-out both;}
+.qp-tile.revealing::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.8) 50%,transparent 70%);background-size:260% 100%;
+  animation:qpShine 1.8s .45s ease-out both;}
+@keyframes qpReveal{0%{filter:blur(18px) brightness(1.7) saturate(.4);transform:scale(.94);}
+  55%{filter:blur(4px) brightness(1.18);transform:scale(1.03);}100%{filter:none;transform:none;}}
+@keyframes qpShine{from{background-position:120% 0;opacity:1;}to{background-position:-60% 0;opacity:0;}}
+@media(prefers-reduced-motion:reduce){.qp-tile.revealing,.qp-tile.revealing::after{animation:none;}}
+/* puzzle answers wear the colour of the piece that opened them (--qc-* set on the question layer) */
+.qp-options .opt-cell,.stage.thm-toybox .qp-options .opt-cell{border-color:var(--qc-dark,#386AF6);box-shadow:0 7px 0 var(--qc-edge,#2A55D0),0 12px 18px rgba(11,42,90,.16);}
+.qp-options .opt-cell:hover{box-shadow:0 10px 0 var(--qc-edge,#2A55D0),0 16px 22px rgba(11,42,90,.18);}
+.qp-options .opt-cell:active{box-shadow:0 2px 0 var(--qc-edge,#2A55D0),0 4px 8px rgba(11,42,90,.14);}
+.qp-options .opt-cell.correct,.stage.thm-toybox .qp-options .opt-cell.correct{border-color:var(--correct);box-shadow:0 7px 0 #149C3C,0 12px 18px rgba(11,42,90,.16);}
+.qp-options .opt-cell.faded{box-shadow:none;}
+/* the big question piece: question + answers written on an enlarged copy of the tapped piece */
+.qp-big{position:relative;flex:none;}
+.qp-big > svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 12px 18px rgba(11,42,90,.22));}
+.qp-big-body{position:absolute;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;}
+.qp-big .qp-qcard{width:100%;gap:0;}
+.qp-big .qp-qcard::after{display:none;}
+.qp-big .qp-question-text{font-size:34px;line-height:1.25;color:#FFFFFF;text-shadow:0 3px 0 var(--qc-edge),0 0 3px var(--qc-edge),0 0 3px var(--qc-edge);}
+.qp-big.ink-dark .qp-question-text{color:#0B3D8C;text-shadow:0 2px 0 rgba(255,255,255,.7);}
+.qp-big .qp-options,.qp-big .qp-options .q-row{width:100%;}
+.qp-big .qp-options .opt-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;width:100%;max-width:none;}
+.qp-big .qp-options .opt-cell{min-height:70px;padding:8px 10px;}
+.qp-big .qp-options .ev-opt-lbl{font-size:25px;}
+.qp-big .qp-options .ev-opt-img{width:auto;height:78px;}
+/* readable question on the big piece: flat white strip (no border / edge / shadow, so it is not a button),
+   dark-blue text at 42px — the same ink as the answers on every piece colour */
+.qp-big .qp-qcard{box-sizing:border-box;padding:12px 22px;border-radius:22px;background:#FFFFFF;}
+.qp-big .qp-question-text,.qp-big.ink-dark .qp-question-text{font-size:42px;line-height:1.22;color:#0B3D8C;text-shadow:none;}
+.qp-big .qp-question-text{text-wrap:balance;}
+/* calmer sizes: question 32px on a quiet strip; answers are clearly buttons — tinted with the piece colour,
+   thicker coloured border and 3D edge, so they never blend into the white question strip */
+.qp-big-body{gap:20px;}
+.qp-big .qp-qcard{padding:8px 18px;border-radius:18px;background:rgba(255,255,255,.92);}
+.qp-big .qp-question-text,.qp-big.ink-dark .qp-question-text{font-size:32px;line-height:1.25;}
+.qp-big .qp-options .opt-grid{gap:16px;}
+.qp-big .qp-options .opt-cell,.stage.thm-toybox .qp-big .qp-options .opt-cell{min-height:64px;padding:8px 8px;border-width:4px;
+  background:color-mix(in srgb,var(--qc-dark) 14%,#FFFFFF);}
+.qp-big .qp-options .ev-opt-lbl{font-size:23px;}
+.qp-big .qp-options .ev-opt-img{height:64px;}
+/* question vs answers at a glance: the question is a flat dark-blue label with white text (high contrast, not a
+   button); the answers are bright white 3D buttons outlined in the piece's colour */
+.qp-big .qp-qcard{background:#0B3D8C;box-shadow:none;}
+.qp-big .qp-question-text,.qp-big.ink-dark .qp-question-text{color:#FFFFFF;text-shadow:none;}
+.qp-big .qp-options .opt-cell,.stage.thm-toybox .qp-big .qp-options .opt-cell{background:#FFFFFF;}
+/* attention goes to the ANSWERS first: the question is a quiet, smaller label (soft see-through white, no edge);
+   the answers are the big, bold, bright 3D buttons */
+.qp-big .qp-qcard{width:auto;max-width:100%;padding:6px 22px;border-radius:999px;background:rgba(255,255,255,.78);}
+.qp-big .qp-question-text,.qp-big.ink-dark .qp-question-text{font-size:28px;font-weight:700;line-height:1.25;color:#0B3D8C;}
+.qp-big-body{gap:18px;}
+.qp-big .qp-options .opt-grid{gap:18px;}
+.qp-big .qp-options .opt-cell,.stage.thm-toybox .qp-big .qp-options .opt-cell{min-height:86px;padding:10px 8px;border-width:5px;border-radius:22px;background:#FFFFFF;
+  box-shadow:0 9px 0 var(--qc-edge),0 16px 24px rgba(11,42,90,.28);}
+.qp-big .qp-options .opt-cell:hover{box-shadow:0 12px 0 var(--qc-edge),0 20px 28px rgba(11,42,90,.3);}
+.qp-big .qp-options .opt-cell:active{box-shadow:0 2px 0 var(--qc-edge),0 4px 8px rgba(11,42,90,.2);}
+.qp-big .qp-options .ev-opt-lbl{font-size:28px;font-weight:800;}
+.qp-big .qp-options .ev-opt-img{height:78px;}
+.qp-big .qp-options .opt-cell.correct,.stage.thm-toybox .qp-big .qp-options .opt-cell.correct{border-color:var(--correct);box-shadow:0 9px 0 #149C3C,0 16px 24px rgba(11,42,90,.28);}
+.qp-big .qp-options .opt-cell.faded{box-shadow:none;}
+.qp-big .qp-options .opt-grid{align-items:stretch;}
+.qp-big .qp-options .opt-cell{height:auto;}
+.qp-big .qp-options .ev-opt-lbl{text-wrap:balance;}
+/* question: solid white box with gently rounded corners, a little higher, 30px; answers 30px */
+.qp-big .qp-qcard{padding:8px 24px;border-radius:14px;background:#FFFFFF;margin:-14px 0 14px;}
+.qp-big .qp-question-text,.qp-big.ink-dark .qp-question-text{font-size:30px;}
+.qp-big .qp-options .ev-opt-lbl{font-size:30px;}
+/* white sticker answers: a hairline keeps the white rim crisp on the light yellow piece */
+.qp-big .qp-options .opt-cell:not(.correct){outline:1.5px solid rgba(16,28,60,.10);outline-offset:0;}

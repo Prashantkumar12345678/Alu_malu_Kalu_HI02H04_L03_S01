@@ -209,6 +209,110 @@ function _tone(freqs, type, dur, vol) {
 const sfxTap = () => _tone([520], "sine", 0.09, 0.09);
 const sfxCorrect = () => _tone([660, 880, 1180], "sine", 0.42, 0.13); // rising major arpeggio
 const sfxWrongSoft = () => _tone([300, 235], "triangle", 0.2, 0.08); // gentle, never harsh
+/* a pitch glide (whoosh) — used by the picture puzzle's open / close / reveal */
+function _sweep(f0, f1, dur, vol, type) {
+  const c = _ac();
+  if (!c) return;
+  const t = c.currentTime, o = c.createOscillator(), g = c.createGain();
+  o.type = type || "sine";
+  o.frequency.setValueAtTime(f0, t);
+  o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + 0.03);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(c.destination);
+  o.start(t);
+  o.stop(t + dur + 0.02);
+}
+const sfxPuzzleOpen = () => _sweep(260, 900, 0.85, 0.09); // rising whoosh as the question comes out
+const sfxPuzzleClose = () => _sweep(900, 240, 0.85, 0.08); // falling whoosh as it goes back in
+/* one soft bell note: a sine with a quiet inharmonic partial and a long ring-out */
+function _bell(freq, at, vol, ring) {
+  const c = _ac();
+  if (!c) return;
+  const t = c.currentTime + at;
+  [[1, vol], [2.76, vol * 0.25], [5.4, vol * 0.08]].forEach(([mult, v]) => {
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = "sine";
+    o.frequency.value = freq * mult;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(v, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + ring / mult);
+    o.connect(g).connect(c.destination);
+    o.start(t);
+    o.stop(t + ring + 0.05);
+  });
+}
+/* puzzle-game sounds for dragging pieces: a soft "pick up" tick, a paper-on-table rustle that follows the
+   drag speed, and a wooden "snap" when a piece clicks into its place (all synthesised, no files) */
+let _noiseBuf = null;
+function _noise(c) {
+  if (!_noiseBuf) {
+    _noiseBuf = c.createBuffer(1, c.sampleRate, c.sampleRate);
+    const d = _noiseBuf.getChannelData(0);
+    for (let n = 0; n < d.length; n++) d[n] = Math.random() * 2 - 1;
+  }
+  return _noiseBuf;
+}
+const sfxPieceLift = () => _tone([660, 990], "sine", 0.1, 0.06);
+function sfxPieceSlide() {
+  const c = _ac();
+  if (!c) return null;
+  const src = c.createBufferSource(), bp = c.createBiquadFilter(), g = c.createGain();
+  src.buffer = _noise(c);
+  src.loop = true;
+  bp.type = "bandpass";
+  bp.frequency.value = 1400;
+  bp.Q.value = 0.9;
+  g.gain.value = 0.0001;
+  src.connect(bp).connect(g).connect(c.destination);
+  src.start();
+  let idle = 0;
+  return {
+    speed(px) { // px moved since the last pointer event (stage px): louder / brighter the faster the drag
+      const t = c.currentTime;
+      g.gain.setTargetAtTime(Math.min(0.11, 0.004 * px), t, 0.03);
+      bp.frequency.setTargetAtTime(1100 + Math.min(px, 60) * 30, t, 0.05);
+      clearTimeout(idle);
+      idle = setTimeout(() => g.gain.setTargetAtTime(0.0001, c.currentTime, 0.05), 90); // hand stopped: silence
+    },
+    stop() {
+      clearTimeout(idle);
+      g.gain.setTargetAtTime(0.0001, c.currentTime, 0.04);
+      src.stop(c.currentTime + 0.25);
+    },
+  };
+}
+function sfxPieceSnap() {
+  const c = _ac();
+  if (!c) return;
+  const t = c.currentTime;
+  const src = c.createBufferSource(), hp = c.createBiquadFilter(), g = c.createGain();
+  src.buffer = _noise(c);
+  hp.type = "highpass";
+  hp.frequency.value = 2200;
+  g.gain.setValueAtTime(0.25, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.045);
+  src.connect(hp).connect(g).connect(c.destination);
+  src.start(t);
+  src.stop(t + 0.06);
+  const o = c.createOscillator(), og = c.createGain(); // the wooden "thock" under the click
+  o.type = "sine";
+  o.frequency.setValueAtTime(240, t);
+  o.frequency.exponentialRampToValueAtTime(110, t + 0.12);
+  og.gain.setValueAtTime(0.0001, t);
+  og.gain.exponentialRampToValueAtTime(0.2, t + 0.008);
+  og.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+  o.connect(og).connect(c.destination);
+  o.start(t);
+  o.stop(t + 0.18);
+}
+/* the piece un-blurs: a soft rising shimmer, a twinkly bell run up a major chord, then a warm closing chord */
+const sfxPuzzleReveal = () => {
+  _sweep(600, 2400, 0.9, 0.025, "triangle");
+  [1047, 1319, 1568, 2093, 2637].forEach((f, n) => _bell(f, 0.08 + n * 0.09, 0.07, 1.1));
+  [523, 659, 784].forEach(f => _bell(f, 0.62, 0.05, 1.6));
+};
 /* a joyful star/confetti pop, centred on the play stage (upper-middle) */
 function burstStars() {
   const stage = document.querySelector(".slide-stage") || document.body;
@@ -244,10 +348,9 @@ function swApplyPose() {
   if (!img) return;
   const expr = SW_POSE[swMood] || "talking";
   const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const src = $("stage").classList.contains("story-reading")
-    ? "assets/UI/reading_mascot.webp"
-    : "assets/UI/sw_head_" + expr +
-      (expr !== "talking" && !still ? "_anim" : "") + ".webp";
+  // story pages use the same header head as the reference (no separate reading mascot)
+  const src = "assets/UI/sw_head_" + expr +
+    (expr !== "talking" && !still ? "_anim" : "") + ".webp";
   if (img.getAttribute("src") !== src) img.src = src;
   img.onerror = () => { img.onerror = null; img.src = "assets/UI/mascot.webp"; };
   img.style.display = "";
@@ -1497,10 +1600,39 @@ function mountQuestionPuzzle(host, slide) {
     "M0 256.5H370C345 206 430 206 405 256.5H536.5V388C587 363 587 448 536.5 423V513H0Z",
     "M536.5 256.5H906C881 206 966 206 941 256.5H1073V513H536.5V423C587 448 587 363 536.5 388Z",
   ];
+  // Closed (question) pieces: candy-coloured gradient, polka dots, a glossy shine and a bobbing "?" badge.
+  // The svg is stretched to the picture's 16:9 tile, so round shapes are pre-squashed by `squash` to stay round.
+  const PIECE_THEMES = [
+    {light:"#7FD8FF", dark:"#1E96F0", edge:"#0F6FC4"},
+    {light:"#C9A6FF", dark:"#8A5CF6", edge:"#6538D1"},
+    {light:"#FFC58A", dark:"#FF8A3D", edge:"#D9621A"},
+    {light:"#FFE680", dark:"#FFBE1A", edge:"#D99600"},
+  ];
+  const squash = (536.5 / 256.5) / (16 / 9);
+  const sparkle = (cx, cy, r, cls) =>
+    `<path class="qp-spark ${cls}" d="M${cx} ${cy - r}Q${cx} ${cy} ${cx + r * .62} ${cy}Q${cx} ${cy} ${cx} ${cy + r}Q${cx} ${cy} ${cx - r * .62} ${cy}Q${cx} ${cy} ${cx} ${cy - r}Z" fill="#FFFFFF"/>`;
   const pieceArt = (i, questionMark) => {
     const x = i % 2 * 536.5, y = Math.floor(i / 2) * 256.5;
     const key = "qp-cut-" + (window.__qpClip = (window.__qpClip || 0) + 1);
-    return `<svg viewBox="${x} ${y} 536.5 256.5" preserveAspectRatio="none" aria-hidden="true"><defs><clipPath id="${key}"><path d="${piecePaths[i]}"/></clipPath></defs><path class="qp-piece-base" d="${piecePaths[i]}" fill="${questionMark ? '#FFFFFF' : '#EDF5FB'}" stroke="#A8C8E2" stroke-width="4"/><image class="qp-piece-image" href="${image}" width="1073" height="513" preserveAspectRatio="none" clip-path="url(#${key})"/><path d="${piecePaths[i]}" fill="none" stroke="#FFFFFF" stroke-width="3"/>${questionMark ? `<text class="qp-mark" x="${x+268.25}" y="${y+128.25}" text-anchor="middle" dominant-baseline="central" fill="#0B3D8C" font-size="92" font-weight="800">?</text>` : ''}</svg>`;
+    const cx = x + 268.25, cy = y + 128.25;
+    const t = PIECE_THEMES[i % PIECE_THEMES.length];
+    const closed = questionMark ? `
+      <linearGradient id="${key}-g" gradientUnits="userSpaceOnUse" x1="${x}" y1="${y}" x2="${x + 180}" y2="${y + 256.5}"><stop offset="0" stop-color="${t.light}"/><stop offset="1" stop-color="${t.dark}"/></linearGradient>
+      <pattern id="${key}-p" width="64" height="${64 / squash}" patternUnits="userSpaceOnUse"><ellipse cx="16" cy="${16 / squash}" rx="7" ry="${7 / squash}" fill="#FFFFFF" fill-opacity=".22"/><ellipse cx="48" cy="${48 / squash}" rx="4" ry="${4 / squash}" fill="#FFFFFF" fill-opacity=".16"/></pattern>` : "";
+    const base = questionMark
+      ? `<path class="qp-piece-base" d="${piecePaths[i]}" fill="url(#${key}-g)" stroke="${t.edge}" stroke-width="6"/>
+         <rect x="${x - 60}" y="${y - 60}" width="656.5" height="376.5" fill="url(#${key}-p)" clip-path="url(#${key})"/>
+         <ellipse cx="${x + 150}" cy="${y + 24}" rx="210" ry="${60 / squash}" fill="#FFFFFF" fill-opacity=".28" clip-path="url(#${key})"/>`
+      : `<path class="qp-piece-base" d="${piecePaths[i]}" fill="#EDF5FB" stroke="#A8C8E2" stroke-width="4"/>`;
+    const badge = questionMark ? `
+      <g class="qp-mark" style="--qp-d:${-(i * .45)}s"><g transform="translate(${cx} ${cy}) scale(1 ${1 / squash})">
+        <circle r="64" cy="7" fill="${t.edge}" fill-opacity=".35"/>
+        <circle r="64" fill="#FFFFFF" stroke="${t.edge}" stroke-width="7"/>
+        <circle r="50" fill="none" stroke="${t.light}" stroke-width="5" stroke-dasharray="6 10" stroke-linecap="round"/>
+        <text class="qp-q" y="4" text-anchor="middle" dominant-baseline="central" fill="${t.edge}">?</text>
+      </g></g>
+      ${sparkle(cx - 118, cy - 52, 20, "s1")}${sparkle(cx + 112, cy + 46, 15, "s2")}${sparkle(cx + 96, cy - 66, 11, "s3")}` : "";
+    return `<svg viewBox="${x} ${y} 536.5 256.5" preserveAspectRatio="none" aria-hidden="true"><defs><clipPath id="${key}"><path d="${piecePaths[i]}"/></clipPath>${closed}</defs>${base}<image class="qp-piece-image" href="${image}" width="1073" height="513" preserveAspectRatio="none" clip-path="url(#${key})"/><path d="${piecePaths[i]}" fill="none" stroke="#FFFFFF" stroke-width="3"/>${badge}</svg>`;
   };
   let active = true, currentQuestion = null, selectedPiece = null, dragging = null, allFirstTry = true;
   const sourceImage = new Image();
@@ -1517,7 +1649,7 @@ function mountQuestionPuzzle(host, slide) {
   const later = (fn, ms) => timers.push(setTimeout(() => { if (active) fn(); }, ms));
   const paint = (el, i) => {
     el.querySelector(".qp-piece-image").style.opacity = "1";
-    el.querySelector(".qp-mark")?.remove();
+    el.querySelectorAll(".qp-mark,.qp-spark").forEach(n => n.remove());
   };
   const read = () => {
     if (!active) return;
@@ -1525,6 +1657,40 @@ function mountQuestionPuzzle(host, slide) {
     else play(unlocked.size === questions.length ? audioAsset("vo_review_puzzle_assemble") : audioFor(slide, "prompt"));
   };
   state.replayAudio = read;
+  // Zoom helper: the transform that lays the big piece's rectangle exactly over the small tile (its
+  // transform-origin is the centre of that rectangle), so the piece grows out of / shrinks into its tile.
+  const stillMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const intoTile = (tile, big) => {
+    const b = big.querySelector(".qp-big-body").getBoundingClientRect(), t = tile.getBoundingClientRect();
+    const s = wrap.getBoundingClientRect().width / wrap.offsetWidth || 1;
+    const dx = (t.left + t.width / 2 - (b.left + b.width / 2)) / s;
+    const dy = (t.top + t.height / 2 - (b.top + b.height / 2)) / s;
+    return `translate(${dx}px, ${dy}px) scale(${t.width / b.width})`;
+  };
+  // The big question piece: the same jigsaw outline as tile slot `g`, drawn at a uniform BIG scale, framed
+  // to the piece's own bounds (tabs included). Its body = the piece's rectangle, padded where a notch bites in.
+  const PIECE_BOUNDS = [[0, 0, 536.5, 256.5], [486, 0, 1073, 256.5], [0, 206, 587, 513], [536.5, 206, 1073, 513]];
+  const PIECE_NOTCH = [{r: 1, b: 1}, {b: 1}, {}, {l: 1}];
+  const BIG = 1.4, EDGE = 8;
+  const bigPiece = (g) => {
+    const t = PIECE_THEMES[g % PIECE_THEMES.length], [x0, y0, x1, y1] = PIECE_BOUNDS[g], notch = PIECE_NOTCH[g];
+    const vx = x0 - EDGE, vy = y0 - EDGE, vw = x1 - x0 + 2 * EDGE, vh = y1 - y0 + 2 * EDGE;
+    const qx = g % 2 * 536.5, qy = Math.floor(g / 2) * 256.5;
+    const key = "qp-big-" + (window.__qpClip = (window.__qpClip || 0) + 1);
+    const pad = (side) => (notch[side] ? 78 : 30) + "px";
+    // shift sideways so the piece's rectangle (not its side tabs) sits in the middle; a top tab keeps its room
+    const shiftX = ((vx + vw) - (qx + 536.5) - (qx - vx)) * BIG;
+    return `<div class="qp-big${g >= 2 ? " ink-dark" : ""}" style="margin-left:${shiftX}px;width:${vw * BIG}px;height:${vh * BIG}px;transform-origin:${(qx - vx + 268.25) * BIG}px ${(qy - vy + 128.25) * BIG}px">
+      <svg viewBox="${vx} ${vy} ${vw} ${vh}" aria-hidden="true"><defs><clipPath id="${key}"><path d="${piecePaths[g]}"/></clipPath>
+        <linearGradient id="${key}-g" gradientUnits="userSpaceOnUse" x1="${qx}" y1="${qy}" x2="${qx + 180}" y2="${qy + 256.5}"><stop offset="0" stop-color="${t.light}"/><stop offset="1" stop-color="${t.dark}"/></linearGradient>
+        <pattern id="${key}-p" width="40" height="40" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="4.5" fill="#FFFFFF" fill-opacity=".2"/><circle cx="30" cy="30" r="2.6" fill="#FFFFFF" fill-opacity=".14"/></pattern></defs>
+        <path d="${piecePaths[g]}" fill="url(#${key}-g)" stroke="${t.edge}" stroke-width="4"/>
+        <rect x="${vx}" y="${vy}" width="${vw}" height="${vh}" fill="url(#${key}-p)" clip-path="url(#${key})"/>
+        <ellipse cx="${qx + 150}" cy="${qy + 18}" rx="210" ry="46" fill="#FFFFFF" fill-opacity=".25" clip-path="url(#${key})"/>
+        <path d="${piecePaths[g]}" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-opacity=".8"/></svg>
+      <div class="qp-big-body" style="left:${(qx - vx) * BIG}px;top:${(qy - vy) * BIG}px;width:${536.5 * BIG}px;height:${256.5 * BIG}px;padding:22px ${pad("r")} ${notch.b ? "74px" : "24px"} ${pad("l")}"></div>
+    </div>`;
+  };
   const resetHeader = () => {
     $("promptText").textContent = unlocked.size === questions.length ? "टुकड़ों को खिसकाकर चित्र पूरा कीजिए।" : slide.prompt_hi;
     $("promptText").classList.remove("compact");
@@ -1556,11 +1722,41 @@ function mountQuestionPuzzle(host, slide) {
       state.slideStart = Date.now();
       $("promptText").textContent = "सही उत्तर चुनिए";
       $("promptText").classList.remove("compact");
-      tray.hidden = true;
-      surface.hidden = true;
-      dialog.hidden = false;
-      dialog.innerHTML = '<div class="qp-question-text"></div><div class="qp-options"></div>';
+      // The tapped piece itself grows into a big copy (same colour, same jigsaw shape) and the question and
+      // answers are written ON it, inside the piece's own rectangle (never over a tab or into a notch).
+      const geo = positions[i];
+      const theme = PIECE_THEMES[geo % PIECE_THEMES.length];
+      // answer buttons: white "stickers" — white rim + a see-through dark 3D underside, the same on every piece colour
+      dialog.style.setProperty("--qc-dark", "#FFFFFF");
+      dialog.style.setProperty("--qc-edge", "rgba(16, 28, 60, .32)");
+      dialog.innerHTML = bigPiece(geo);
+      dialog.querySelector(".qp-big-body").innerHTML = `<div class="qp-qcard"><div class="qp-question-text"></div></div><div class="qp-options"></div>`;
       dialog.querySelector(".qp-question-text").textContent = q.prompt_hi;
+      const big = dialog.querySelector(".qp-big"), bigBody = dialog.querySelector(".qp-big-body");
+      sfxPuzzleOpen();
+      dialog.hidden = false; // must be visible before measuring, or the big piece has no size yet
+      const fromTile = intoTile(tile, big);
+      // Park the big piece exactly over the tapped tile and let the browser paint that first, then start the
+      // growth (two frames later) — otherwise the work of building the question screen eats the start of it.
+      const T = stillMotion ? 1 : 1800;
+      big.style.transform = fromTile;
+      [...bigBody.children].forEach(part => { part.style.opacity = "0"; });
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        if (currentQuestion !== q) return;
+        big.style.transform = "";
+        [...bigBody.children].forEach(part => { part.style.opacity = ""; });
+        const fade = surface.animate([{opacity: 1}, {opacity: 0}], {duration: stillMotion ? 1 : 700, fill: "forwards"});
+        fade.onfinish = () => { fade.cancel(); if (currentQuestion === q) surface.hidden = true; };
+        big.animate([
+          {transform: fromTile},
+          {offset: .75, transform: "scale(1.03)"},
+          {transform: "none"},
+        ], {duration: T, easing: "cubic-bezier(.45,.05,.35,1)"});
+        [...bigBody.children].forEach((part, n) => part.animate(
+          [{opacity: 0, transform: "translateY(16px)"}, {opacity: 0, offset: .65, transform: "translateY(16px)"}, {opacity: 1, transform: "none"}],
+          {duration: T + 220 * n, easing: "ease-out"},
+        ));
+      }));
       SwiftPAL.emit("puzzle_question_opened", {slide_id:q.id, piece:i});
       mountTapOptions({
         slide:q, host:dialog.querySelector(".qp-options"), signalName:q.data.signal_name || "evidence_qa_first_try",
@@ -1577,29 +1773,46 @@ function mountQuestionPuzzle(host, slide) {
         onAnswer:(_, success) => {
           allFirstTry = allFirstTry && success && state.attempts === 0;
           later(() => {
-            unlocked.add(i);
-            tile.classList.add("unlocked");
-            tile.setAttribute("aria-label", `चित्र का टुकड़ा ${i + 1}`);
-            tile.innerHTML = pieceArt(i, false);
-            paint(tile, i);
-            SwiftPAL.emit("puzzle_piece_unlocked", {slide_id:q.id, piece:i, answered:unlocked.size});
-            currentQuestion = null;
-            state.locked = false;
             state.hintActive = false;
             $("hintBtn").classList.remove("show");
             stopNudge();
-            dialog.hidden = true;
-            dialog.textContent = "";
+            resetHeader();
+            // the question goes back INTO the piece, then the piece un-blurs into its part of the picture
             tray.hidden = false;
             surface.hidden = false;
-            resetHeader();
-            if (unlocked.size === questions.length) {
-              wrap.classList.add("assembling");
-              board.hidden = false;
-              // Keep the revealed, mixed-up arrangement until the learner moves it.
-              tiles.forEach((piece, n) => positionTile(piece, positions[n]));
-              read();
-            }
+            surface.animate([{opacity: 0}, {opacity: 1}], {duration: stillMotion ? 1 : 900});
+            sfxPuzzleClose();
+            [...bigBody.children].forEach(part => part.animate([{opacity: 1}, {opacity: 0}], {duration: stillMotion ? 1 : 450, fill: "forwards"}));
+            const shrink = big.animate([
+              {transform: "none"},
+              {offset: .25, transform: "scale(1.03)"},
+              {transform: intoTile(tile, big)},
+            ], {duration: stillMotion ? 1 : 1500, easing: "cubic-bezier(.5,0,.5,1)", fill: "forwards"});
+            shrink.onfinish = () => {
+              if (!active) return;
+              dialog.hidden = true;
+              dialog.textContent = "";
+              shrink.cancel();
+              unlocked.add(i);
+              tile.classList.add("unlocked", "revealing");
+              tile.setAttribute("aria-label", `चित्र का टुकड़ा ${i + 1}`);
+              tile.innerHTML = pieceArt(i, false);
+              paint(tile, i);
+              sfxPuzzleReveal();
+              SwiftPAL.emit("puzzle_piece_unlocked", {slide_id:q.id, piece:i, answered:unlocked.size});
+              later(() => {
+                tile.classList.remove("revealing");
+                currentQuestion = null;
+                state.locked = false;
+                if (unlocked.size === questions.length) {
+                  wrap.classList.add("assembling");
+                  board.hidden = false;
+                  // Keep the revealed, mixed-up arrangement until the learner moves it.
+                  tiles.forEach((piece, n) => positionTile(piece, positions[n]));
+                  read();
+                }
+              }, stillMotion ? 50 : 2300);
+            };
           }, 500);
         },
       });
@@ -1631,7 +1844,8 @@ function mountQuestionPuzzle(host, slide) {
     selectedPiece = null;
     tiles.forEach(t => t.classList.remove("selected"));
     placed.add(i);
-    sfxCorrect();
+    sfxPieceSnap();
+    later(sfxCorrect, 110);
     SwiftPAL.emit("puzzle_piece_placed", {slide_id:pieceQuestions[i].id, piece:i, pieces:placed.size});
     if (placed.size === questions.length - 1) {
       const lastPiece = positions.findIndex((slot, piece) => !placed.has(piece) && slot === piece);
@@ -1661,6 +1875,7 @@ function mountQuestionPuzzle(host, slide) {
   });
   tiles.forEach((tile, i) => {
     const resetDrag = () => {
+      if (dragging && dragging.sound) dragging.sound.stop();
       tile.style.transform = "";
       tile.classList.remove("dragging");
       dragging = null;
@@ -1669,7 +1884,8 @@ function mountQuestionPuzzle(host, slide) {
     tile.onpointerdown = e => {
       if (!active || isPlaying || unlocked.size !== questions.length || placed.has(i) || (e.pointerType === "mouse" && e.button !== 0)) return;
       const scale = $("stage").getBoundingClientRect().width / 1333;
-      dragging = {i, pointer:e.pointerId, x:e.clientX, y:e.clientY, scale};
+      dragging = {i, pointer:e.pointerId, x:e.clientX, y:e.clientY, lastX:e.clientX, lastY:e.clientY, scale, sound:sfxPieceSlide()};
+      sfxPieceLift();
       tile.setPointerCapture(e.pointerId);
       tile.classList.add("dragging");
       e.preventDefault();
@@ -1677,6 +1893,9 @@ function mountQuestionPuzzle(host, slide) {
     tile.onpointermove = e => {
       if (!dragging || dragging.i !== i || dragging.pointer !== e.pointerId) return;
       tile.style.transform = `translate(${(e.clientX-dragging.x)/dragging.scale}px,${(e.clientY-dragging.y)/dragging.scale}px)`;
+      if (dragging.sound) dragging.sound.speed(Math.hypot(e.clientX - dragging.lastX, e.clientY - dragging.lastY) / dragging.scale);
+      dragging.lastX = e.clientX;
+      dragging.lastY = e.clientY;
       board.querySelectorAll(".qp-slot").forEach(z => {
         const r = z.getBoundingClientRect();
         z.classList.toggle("hover", !z.disabled && e.clientX>=r.left && e.clientX<=r.right && e.clientY>=r.top && e.clientY<=r.bottom);
@@ -1697,6 +1916,7 @@ function mountQuestionPuzzle(host, slide) {
   state.slideCleanup = () => {
     active = false;
     currentQuestion = null;
+    if (dragging && dragging.sound) dragging.sound.stop();
     dragging = null;
     sourceImage.onload = null;
     timers.forEach(clearTimeout);
@@ -1748,8 +1968,19 @@ function mountReadingPractice(host, slide) {
   mic.className = "reading-mic";
   mic.type = "button";
   mic.setAttribute("aria-label", "वाक्य पढ़ने के लिए माइक्रोफ़ोन");
-  mic.innerHTML = '<svg viewBox="0 0 62 60" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Audio"><g filter="url(#readingChipShadow)"><rect x="8" y="4" width="46" height="44" rx="22" fill="url(#readingChipGrad)"/><rect x="6" y="2" width="50" height="48" rx="24" stroke="white" stroke-width="4"/><rect class="mic" x="26.75" y="15.05" width="8.5" height="15.85" rx="4.25" fill="white"/><path class="mic" d="M24.5 26V26.7A6.5 6.5 0 0 0 37.5 26.7V26M31 33.2V36.1M27.7 36.8H34.3" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><g class="mic-wave" fill="white"><rect x="22.9" y="22" width="2.2" height="8" rx="1.1"/><rect x="26.4" y="19" width="2.2" height="14" rx="1.1"/><rect x="29.9" y="17" width="2.2" height="18" rx="1.1"/><rect x="33.4" y="19" width="2.2" height="14" rx="1.1"/><rect x="36.9" y="22" width="2.2" height="8" rx="1.1"/></g></g><defs><filter id="readingChipShadow" x="0" y="0" width="62" height="60" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/><feOffset dy="4"/><feGaussianBlur stdDeviation="2"/><feComposite in2="hardAlpha" operator="out"/><feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"/><feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow"/><feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape"/></filter><linearGradient id="readingChipGrad" x1="8" y1="26" x2="54" y2="26" gradientUnits="userSpaceOnUse"><stop stop-color="#1987FC"/><stop offset="1" stop-color="#1565F4"/></linearGradient></defs></svg>';
+  mic.innerHTML = '<svg viewBox="0 0 62 60" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Audio"><g filter="url(#readingChipShadow)"><circle cx="31" cy="26" r="23" fill="url(#readingChipGrad)"/><circle cx="31" cy="26" r="25" stroke="white" stroke-width="4"/><rect class="mic" x="26.75" y="15.05" width="8.5" height="15.85" rx="4.25" fill="white"/><path class="mic" d="M24.5 26V26.7A6.5 6.5 0 0 0 37.5 26.7V26M31 33.2V36.1M27.7 36.8H34.3" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><g class="mic-wave" fill="white"><rect x="22.9" y="22" width="2.2" height="8" rx="1.1"/><rect x="26.4" y="19" width="2.2" height="14" rx="1.1"/><rect x="29.9" y="17" width="2.2" height="18" rx="1.1"/><rect x="33.4" y="19" width="2.2" height="14" rx="1.1"/><rect x="36.9" y="22" width="2.2" height="8" rx="1.1"/></g></g><defs><filter id="readingChipShadow" x="0" y="0" width="62" height="60" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/><feOffset dy="4"/><feGaussianBlur stdDeviation="2"/><feComposite in2="hardAlpha" operator="out"/><feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"/><feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow"/><feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape"/></filter><linearGradient id="readingChipGrad" x1="8" y1="26" x2="54" y2="26" gradientUnits="userSpaceOnUse"><stop stop-color="#1987FC"/><stop offset="1" stop-color="#1565F4"/></linearGradient></defs></svg>';
   card.querySelector(".ev-text").appendChild(mic);
+  // Sentence bar: every story page uses the same type size as page T2 (27.3px); a sentence too long for one
+  // line wraps to two lines at that same size instead of shrinking.
+  const caption = card.querySelector(".story-caption");
+  const fitCaption = () => {
+    if (!caption.isConnected) return;
+    caption.classList.remove("wrap");
+    caption.style.fontSize = "27.3px";
+    if (caption.scrollWidth > caption.clientWidth + 1) caption.classList.add("wrap");
+  };
+  requestAnimationFrame(fitCaption);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitCaption);
   let timer, stopWords=()=>{}, closed=false, mode="ready";
   const current=()=>!closed && CARD.slides[state.idx]===slide;
   state.slideCleanup=()=>{closed=true;clearTimeout(timer);stopWords();stopNudge();mic.classList.remove("p2-rec");};
