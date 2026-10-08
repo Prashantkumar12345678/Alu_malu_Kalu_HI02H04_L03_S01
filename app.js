@@ -363,76 +363,19 @@ function setSwMood(m) {
 }
 /* Correct-answer paper confetti copied from the HI02H11 reference toolkit. */
 function confettiCannon() {
-  const host = document.querySelector('.slide-stage') || document.body;
-  const n = 80;
-  const rnd = (a, b) => a + Math.random() * (b - a);
-  const CONF = [
-  ["#8B2FC9","#5E1C8C"],   /* violet */
-  ["#3F51B5","#27358A"],   /* indigo */
-  ["#1E88E5","#135FA6"],   /* blue   */
-  ["#22B24C","#157A34"],   /* green  */
-  ["#FFD21E","#D9A800"],   /* yellow */
-  ["#FF8A1E","#C75F00"],   /* orange */
-  ["#E5322D","#A81F1B"]    /* red    */
-];
-  const SHAPES = ["st","st","st","st","rc","rc","ln","ln","sq","sq"];
-  const cue = () => {
-    try {
-      const audio = new Audio('assets/Audio/reference_sfx_burst.wav');
-      audio.volume = .7;
-      audio.play().catch(() => {});
-    } catch (_) {}
-  };
-
-  cue(host, "sprinkle");
-  host.querySelectorAll(".fx-confetti").forEach(function(x){ x.remove(); });
-  var dist = host.clientHeight + 60, maxLife = 0;
-  var wrap = document.createElement("div");
-  wrap.className = "fx-confetti";
-  for(var i = 0; i < n; i++){
-    var z     = rnd(0.75, 1.15);           /* depth: nearer pieces are bigger */
-    var fall  = rnd(1.1, 1.8) / z;         /* ...and fall faster (parallax)   */
-    var delay = rnd(0, 0.35);
-    if(fall + delay > maxLife) maxLife = fall + delay;
-    var pair = CONF[i % CONF.length];
-    /* Two regimes, and a real plate moves DIFFERENTLY in each:
-       flutter = zigzags a lot, almost no net sideways drift;
-       tumble  = autorotation produces a steady lateral force, so it barely zigzags
-                 but drifts consistently to one side. */
-    var flutter = Math.random() > 0.22;
-    var rockT   = flutter ? rnd(0.6, 1.2) : rnd(0.75, 1.5);
-    var sway    = flutter ? rnd(10, 34)   : rnd(2, 8);
-    var drift   = flutter ? rnd(-12, 12)  : rnd(-45, 45);
-    var bob     = flutter ? rnd(3, 7)     : rnd(2, 4);
-
-    /* every custom property is set once here and INHERITS down to .w and .f */
-    var p = document.createElement("i"); p.className = "p";
-    p.style.cssText =
-      "--x:"     + rnd(-2, 98).toFixed(1) + "%;" +
-      "--dist:"  + dist + "px;" +
-      "--fall:"  + fall.toFixed(2) + "s;" +
-      "--delay:" + delay.toFixed(2) + "s;" +
-      "--drift:" + drift.toFixed(0) + "px;" +
-      "--sway:"  + sway.toFixed(0) + "px;" +
-      "--bob:"   + bob.toFixed(1) + "px;" +
-      "--rockT:" + rockT.toFixed(2) + "s;" +
-      /* capped short of 90deg: even at max tilt the face still reads */
-      "--amp:"   + Math.round(rnd(28, 52)) + "deg;" +
-      "--yaw:"   + Math.round(rnd(-30, 30)) + "deg;" +
-      "--tilt:"  + Math.round(rnd(-25, 25)) + "deg;" +
-      "--z:"     + z.toFixed(2) + ";" +
-      "--dim:"   + (0.72 + (z - 0.75) / 0.4 * 0.28).toFixed(2) + ";" +
-      "--c:"     + pair[0] + ";--c2:" + pair[1] + ";";
-
-    var w = document.createElement("i"); w.className = "w";
-    var f = document.createElement("i");
-    f.className = "f " + SHAPES[Math.floor(Math.random() * SHAPES.length)] +
-                  (flutter ? "" : " tum");
-    w.appendChild(f); p.appendChild(w); wrap.appendChild(p);
+  /* The standard FLN confetti (confetti.js + confetti.css - the MTG2A04_L02_S01 build): one burst of 100
+     pieces over the whole window, sized with the stage. The kit makes no sound; the game's burst sound
+     plays with it, as before. */
+  try {
+    const audio = new Audio('assets/Audio/reference_sfx_burst.wav');
+    audio.volume = .7;
+    audio.play().catch(() => {});
+  } catch (_) {}
+  if (!document.getElementById("fxLayer")) {
+    const l = document.createElement("div"); l.className = "fx-layer"; l.id = "fxLayer"; l.setAttribute("aria-hidden", "true");
+    document.body.appendChild(l);
   }
-  host.appendChild(wrap);
-  setTimeout(function(){ wrap.remove(); }, (maxLife + 0.3) * 1000);
-
+  FLNMotion.confetti.burst({ host: "#fxLayer", phases: [], count: 100, fall: [1.6, 2.6] });
 }
 /* ---------- Block Town helpers (flagship) ---------- */
 const BT_COLORS = ["#F9695E", "#FDC23C", "#4EBE6A", "#4EA3F0", "#9B7BE8"];
@@ -929,7 +872,7 @@ function mountTapOptions({
         play(audioFor(slide, "correct") || null,
           () => { if (isCurrent()) (onAnswer || finishAnswer)(slide, false); });
       };
-      if (slide.phase === "guided") pointNudgeAt(el);
+      if (slide.phase === "guided" || (slide.data && slide.data.reveal_hand)) pointNudgeAt(el);   /* [puzzle-5] */
     }
     SwiftPAL.emit("answer_revealed", {
       slide_id: slide.id,
@@ -1579,6 +1522,101 @@ function picturePuzzle(imageId) {
   if (solved.size === questions.length && questions.length) board.classList.add("complete");
   return board;
 }
+/* [puzzle-5] FILL THE BLANKS: "___ ने ___ ढूँढ़ने में ___ की मदद की।" with the words आलू / मालू / कालू.
+   The blanks fill IN ORDER: the active one blinks; tap a word - the right word for THIS blank flies into
+   it and is said; the word's card is then used up. A wrong word shakes and is said, then the ladder:
+   1st miss - "फिर से कोशिश कीजिए।" (try_again); 2nd - every option is said in turn while its card pulses;
+   3rd - the whole answer sentence is said (reveal) and the hand points at the right word, and keeps
+   pointing at the right word for every blank still left. All filled: the sentence is said (correct),
+   confetti, and the question closes into its piece (first-try only if there was no miss). */
+function mountFillBlanks(q, host, onDone, isCurrent) {
+  const d = q.data, parts = String(d.sentence || "").split("___"), answers = (d.answers || []).slice();
+  state.attempts = 0; state.locked = false; state.scaffoldLevel = 0; state.slideStart = Date.now();
+  const wrap = document.createElement("div"); wrap.className = "fb-wrap";
+  const line = document.createElement("div"); line.className = "fb-line";
+  const slots = [];
+  parts.forEach((p, k) => {
+    p.trim().split(/\s+/).filter(Boolean).forEach(w => { const s = document.createElement("span"); s.className = "fb-text"; s.textContent = w; line.appendChild(s); });
+    if (k < parts.length - 1) { const b = document.createElement("span"); b.className = "fb-blank"; line.appendChild(b); slots.push(b); }
+  });
+  const grid = document.createElement("div"); grid.className = "opt-grid cols-" + (d.options || []).length + " fb-opts";
+  const cells = (d.options || []).map((o, n) => {
+    const cell = document.createElement("div");
+    cell.className = "opt-cell fb-opt"; cell.dataset.key = n; cell.dataset.word = o.label_hi;
+    cell.innerHTML = `<div class="ev-opt"><span class="ev-opt-lbl">${o.label_hi}</span></div>`;
+    grid.appendChild(cell); return cell;
+  });
+  wrap.appendChild(line); wrap.appendChild(grid); host.appendChild(wrap);
+  let bi = 0, wrong = 0, busy = false, handOn = false, done = false;
+  const wordAudio = w => { const o = (d.options || []).find(x => x.label_hi === w); return o && o.audio ? audioAsset(o.audio) : null; };
+  const cellFor = w => cells.find(c => c.dataset.word === w && !c.classList.contains("fb-used"));
+  const showActive = () => slots.forEach((s, k) => s.classList.toggle("fb-active", k === bi));
+  const pointAtAnswer = () => {
+    cells.forEach(c => c.classList.remove("reveal-hold"));
+    const c = cellFor(answers[bi]); if (!c) return;
+    c.classList.add("reveal-hold"); pointNudgeAt(c);
+  };
+  const flyInto = (cell, slot, word, then) => {
+    const from = cell.querySelector(".ev-opt-lbl").getBoundingClientRect();
+    slot.textContent = word; slot.classList.add("fb-filled"); slot.style.visibility = "hidden";
+    const to = slot.getBoundingClientRect();
+    const fly = document.createElement("span"); fly.className = "fb-fly"; fly.textContent = word;
+    fly.style.left = from.left + "px"; fly.style.top = from.top + "px"; fly.style.fontSize = (to.height * .78) + "px";
+    document.body.appendChild(fly);
+    const dx = to.left + to.width / 2 - (from.left + from.width / 2), dy = to.top - from.top;
+    const an = fly.animate([{transform: "translate(0,0) scale(1.05)"}, {transform: `translate(${dx}px,${dy - 30}px) scale(1.15)`, offset: .6},
+                            {transform: `translate(${dx}px,${dy}px) scale(1)`}], {duration: 520, easing: "cubic-bezier(.3,.7,.4,1)"});
+    an.onfinish = () => { fly.remove(); slot.style.visibility = ""; slot.classList.add("fb-pop"); then(); };
+  };
+  const sayAll = (then) => {
+    const n0 = cells.filter(c => !c.classList.contains("fb-used"));
+    const say = (n) => {
+      if (n >= n0.length || !isCurrent()) { then(); return; }
+      n0[n].classList.add("qp-saying");
+      play(wordAudio(n0[n].dataset.word), () => { n0[n].classList.remove("qp-saying"); setTimeout(() => say(n + 1), 150); });
+    };
+    say(0);
+  };
+  const finish = () => {
+    done = true; state.locked = true; stopNudge();
+    cells.forEach(c => c.classList.remove("reveal-hold"));
+    line.classList.add("fb-done");
+    sfxCorrect(); confettiCannon(); setSwMood("happy");
+    SwiftPAL.emit(d.signal_name || "evidence_qa_first_try", { slide_id: q.id, phase: q.phase, value: true, first_try: wrong === 0,
+      attempts: wrong + 1, scaffold_level: state.scaffoldLevel, latency_ms: Date.now() - state.slideStart });
+    play(audioFor(q, "correct") || null, () => { if (isCurrent()) onDone(q, wrong === 0); });
+  };
+  showActive();
+  cells.forEach(cell => {
+    cell.onclick = () => {
+      if (done || busy || isPlaying || !isCurrent() || cell.classList.contains("fb-used")) return;
+      const w = cell.dataset.word;
+      if (w === answers[bi]) {
+        busy = true; stopNudge(); cell.classList.remove("reveal-hold"); cell.classList.add("fb-used");
+        flyInto(cell, slots[bi], w, () => {
+          play(wordAudio(w), () => {
+            bi++; busy = false;
+            if (bi >= answers.length) { finish(); return; }
+            showActive();
+            if (handOn) pointAtAnswer();
+          });
+        });
+        return;
+      }
+      wrong++; state.attempts++; busy = true;
+      cell.classList.add("wrong-flash"); setTimeout(() => cell.classList.remove("wrong-flash"), 700);
+      sfxWrongSoft(); setSwMood("tryagain");
+      SwiftPAL.emit("answer_wrong", { slide_id: q.id, phase: q.phase, attempts: state.attempts });
+      play(wordAudio(w), () => {
+        if (!isCurrent()) return;
+        if (wrong === 1) { state.scaffoldLevel = 1; play(audioFor(q, "try_again") || null, () => { busy = false; }); }
+        else if (wrong === 2) { state.scaffoldLevel = 2; sayAll(() => { busy = false; }); }
+        else { state.scaffoldLevel = 3; handOn = true; setSwMood("hint"); pointAtAnswer();
+               play(audioFor(q, "reveal") || null, () => { busy = false; }); }
+      });
+    };
+  });
+}
 function mountQuestionPuzzle(host, slide) {
   const questions = slide.data.questions || [];
   const image = imageAsset(slide.data.image_id);
@@ -1590,16 +1628,55 @@ function mountQuestionPuzzle(host, slide) {
   const board = wrap.querySelector(".qp-board");
   const dialog = wrap.querySelector(".qp-question");
   const surface = wrap.querySelector(".qp-surface");
-  // Every revealed piece starts away from its final position.
-  const positions = [1, 3, 0, 2];
+  /* [puzzle-5] THE BOARD IS A LAYOUT, NOT A FIXED 2x2. Each piece is a rectangle of the 1073x513 picture
+     plus jigsaw knobs on the seams it shares; one table per piece count. 4 = the original 2x2 (the
+     generator reproduces its exact outlines); 5 = three across the top, two wide ones below.
+     A seam: [a, b, axis, centre-along-the-edge, who gets the NOTCH] - 'v' seams join a's right edge to
+     b's left, 'h' seams join a's bottom to b's top; the other piece of the pair carries the tab.
+     `positions` scrambles the revealed pieces for the assembling step - only between pieces of the SAME
+     size, so a picture is never stretched into a slot of another shape. */
+  const QP_LAYOUTS = {
+    4: { rects: [[0, 0, 536.5, 256.5], [536.5, 0, 1073, 256.5], [0, 256.5, 536.5, 513], [536.5, 256.5, 1073, 513]],
+         seams: [[0, 1, "v", 108.5, "a"], [2, 3, "v", 405.5, "b"], [0, 2, "h", 387.5, "a"], [1, 3, "h", 923.5, "a"]],
+         positions: [1, 3, 0, 2] },
+    5: { rects: [[0, 0, 357.67, 256.5], [357.67, 0, 715.33, 256.5], [715.33, 0, 1073, 256.5],
+                 [0, 256.5, 536.5, 513], [536.5, 256.5, 1073, 513]],
+         seams: [[0, 1, "v", 108.5, "a"], [1, 2, "v", 128, "b"], [3, 4, "v", 405.5, "b"],
+                 [0, 3, "h", 178.8, "a"], [1, 3, "h", 450, "b"], [2, 4, "h", 894, "a"]],
+         positions: [1, 2, 0, 4, 3] },
+    6: { rects: [[0, 0, 357.67, 256.5], [357.67, 0, 715.33, 256.5], [715.33, 0, 1073, 256.5],
+                 [0, 256.5, 357.67, 513], [357.67, 256.5, 715.33, 513], [715.33, 256.5, 1073, 513]],
+         seams: [[0, 1, "v", 108.5, "a"], [1, 2, "v", 128, "b"], [3, 4, "v", 405.5, "b"], [4, 5, "v", 385, "a"],
+                 [0, 3, "h", 178.8, "a"], [1, 4, "h", 536.5, "b"], [2, 5, "h", 894, "a"]],
+         positions: [1, 2, 0, 5, 3, 4] },
+  };
+  const QPL = QP_LAYOUTS[questions.length] || QP_LAYOUTS[4];
+  const R = QPL.rects, KD = 50.5, KS = 17.5, KC = 42.5;
+  const feats = R.map(() => []);
+  QPL.seams.forEach(([a, b, ax, c, notch]) => {
+    const oa = notch === "a" ? -1 : 1;                       // +1: a tab out of this piece, -1: a notch into it
+    feats[a].push({e: ax === "v" ? "r" : "b", c, o: oa});
+    feats[b].push({e: ax === "v" ? "l" : "t", c, o: -oa});
+  });
+  const f2 = v => +(+v).toFixed(2);
+  const piecePaths = R.map(([x0, y0, x1, y1], i) => {
+    const F = feats[i], s = [`M${f2(x0)} ${f2(y0)}`];
+    F.filter(k => k.e === "t").sort((p, q) => p.c - q.c).forEach(k => { const y = y0 - k.o * KD;
+      s.push(`H${f2(k.c - KS)}C${f2(k.c - KC)} ${f2(y)} ${f2(k.c + KC)} ${f2(y)} ${f2(k.c + KS)} ${f2(y0)}`); });
+    s.push(`H${f2(x1)}`);
+    F.filter(k => k.e === "r").sort((p, q) => p.c - q.c).forEach(k => { const x = x1 + k.o * KD;
+      s.push(`V${f2(k.c - KS)}C${f2(x)} ${f2(k.c - KC)} ${f2(x)} ${f2(k.c + KC)} ${f2(x1)} ${f2(k.c + KS)}`); });
+    s.push(`V${f2(y1)}`);
+    F.filter(k => k.e === "b").sort((p, q) => q.c - p.c).forEach(k => { const y = y1 + k.o * KD;
+      s.push(`H${f2(k.c + KS)}C${f2(k.c + KC)} ${f2(y)} ${f2(k.c - KC)} ${f2(y)} ${f2(k.c - KS)} ${f2(y1)}`); });
+    s.push(`H${f2(x0)}`);
+    F.filter(k => k.e === "l").sort((p, q) => q.c - p.c).forEach(k => { const x = x0 - k.o * KD;
+      s.push(`V${f2(k.c + KS)}C${f2(x)} ${f2(k.c + KC)} ${f2(x)} ${f2(k.c - KC)} ${f2(x0)} ${f2(k.c - KS)}`); });
+    return s.join("") + "Z";
+  });
+  const positions = QPL.positions.slice();
   const pieceQuestions = positions.map(slot => questions[slot]);
   const unlocked = new Set(), placed = new Set(), timers = [];
-  const piecePaths = [
-    "M0 0H536.5V91C486 66 486 151 536.5 126V256.5H405C430 206 345 206 370 256.5H0Z",
-    "M536.5 0H1073V256.5H941C966 206 881 206 906 256.5H536.5V126C486 151 486 66 536.5 91Z",
-    "M0 256.5H370C345 206 430 206 405 256.5H536.5V388C587 363 587 448 536.5 423V513H0Z",
-    "M536.5 256.5H906C881 206 966 206 941 256.5H1073V513H536.5V423C587 448 587 363 536.5 388Z",
-  ];
   // Closed (question) pieces: candy-coloured gradient, polka dots, a glossy shine and a bobbing "?" badge.
   // The svg is stretched to the picture's 16:9 tile, so round shapes are pre-squashed by `squash` to stay round.
   const PIECE_THEMES = [
@@ -1607,32 +1684,41 @@ function mountQuestionPuzzle(host, slide) {
     {light:"#C9A6FF", dark:"#8A5CF6", edge:"#6538D1"},
     {light:"#FFC58A", dark:"#FF8A3D", edge:"#D9621A"},
     {light:"#FFE680", dark:"#FFBE1A", edge:"#D99600"},
+    {light:"#FFB8DD", dark:"#F062A8", edge:"#C93C86"},   /* [puzzle-5] pink - piece 5 */
+    {light:"#8EE6E6", dark:"#1FB5BF", edge:"#138A93"},   /* [puzzle-5] teal - a sixth, if one is added */
   ];
   const squash = (536.5 / 256.5) / (16 / 9);
   const sparkle = (cx, cy, r, cls) =>
     `<path class="qp-spark ${cls}" d="M${cx} ${cy - r}Q${cx} ${cy} ${cx + r * .62} ${cy}Q${cx} ${cy} ${cx} ${cy + r}Q${cx} ${cy} ${cx - r * .62} ${cy}Q${cx} ${cy} ${cx} ${cy - r}Z" fill="#FFFFFF"/>`;
   const pieceArt = (i, questionMark) => {
-    const x = i % 2 * 536.5, y = Math.floor(i / 2) * 256.5;
+    const [x, y, x1r, y1r] = R[i], pw = x1r - x, ph = y1r - y;   /* [puzzle-5] */
     const key = "qp-cut-" + (window.__qpClip = (window.__qpClip || 0) + 1);
-    const cx = x + 268.25, cy = y + 128.25;
+    const cx = x + pw / 2, cy = y + ph / 2;
     const t = PIECE_THEMES[i % PIECE_THEMES.length];
     const closed = questionMark ? `
       <linearGradient id="${key}-g" gradientUnits="userSpaceOnUse" x1="${x}" y1="${y}" x2="${x + 180}" y2="${y + 256.5}"><stop offset="0" stop-color="${t.light}"/><stop offset="1" stop-color="${t.dark}"/></linearGradient>
       <pattern id="${key}-p" width="64" height="${64 / squash}" patternUnits="userSpaceOnUse"><ellipse cx="16" cy="${16 / squash}" rx="7" ry="${7 / squash}" fill="#FFFFFF" fill-opacity=".22"/><ellipse cx="48" cy="${48 / squash}" rx="4" ry="${4 / squash}" fill="#FFFFFF" fill-opacity=".16"/></pattern>` : "";
     const base = questionMark
       ? `<path class="qp-piece-base" d="${piecePaths[i]}" fill="url(#${key}-g)" stroke="${t.edge}" stroke-width="6"/>
-         <rect x="${x - 60}" y="${y - 60}" width="656.5" height="376.5" fill="url(#${key}-p)" clip-path="url(#${key})"/>
-         <ellipse cx="${x + 150}" cy="${y + 24}" rx="210" ry="${60 / squash}" fill="#FFFFFF" fill-opacity=".28" clip-path="url(#${key})"/>`
+         <rect x="${x - 60}" y="${y - 60}" width="${pw + 120}" height="${ph + 120}" fill="url(#${key}-p)" clip-path="url(#${key})"/>
+         <ellipse cx="${x + pw * .28}" cy="${y + 24}" rx="${pw * .39}" ry="${60 / squash}" fill="#FFFFFF" fill-opacity=".28" clip-path="url(#${key})"/>`
       : `<path class="qp-piece-base" d="${piecePaths[i]}" fill="#EDF5FB" stroke="#A8C8E2" stroke-width="4"/>`;
     const badge = questionMark ? `
       <g class="qp-mark" style="--qp-d:${-(i * .45)}s"><g transform="translate(${cx} ${cy}) scale(1 ${1 / squash})">
         <circle r="64" cy="7" fill="${t.edge}" fill-opacity=".35"/>
         <circle r="64" fill="#FFFFFF" stroke="${t.edge}" stroke-width="7"/>
         <circle r="50" fill="none" stroke="${t.light}" stroke-width="5" stroke-dasharray="6 10" stroke-linecap="round"/>
-        <text class="qp-q" y="4" text-anchor="middle" dominant-baseline="central" fill="${t.edge}">?</text>
+        <g class="qp-q" fill="none" stroke-linecap="round" stroke-linejoin="round">${/* a drawn, chunky "?" (same on every device, unlike a font glyph): soft shadow, thick stroke, candy highlight */""}
+          <path d="M-21 -20C-21 -45 23 -45 23 -21C23 -5 2 -4 2 13" stroke="rgba(0,0,0,.14)" stroke-width="18" transform="translate(0 4)"/>
+          <path d="M-21 -20C-21 -45 23 -45 23 -21C23 -5 2 -4 2 13" stroke="${t.edge}" stroke-width="18"/>
+          <path d="M-14 -27C-9 -37 8 -38 14 -30" stroke="${t.light}" stroke-width="5" opacity=".9"/>
+          <circle cx="2" cy="38" r="11" fill="rgba(0,0,0,.14)" stroke="none" transform="translate(0 4)"/>
+          <circle cx="2" cy="38" r="11" fill="${t.edge}" stroke="none"/>
+          <circle cx="-1" cy="35" r="3.5" fill="${t.light}" stroke="none" opacity=".9"/>
+        </g>
       </g></g>
-      ${sparkle(cx - 118, cy - 52, 20, "s1")}${sparkle(cx + 112, cy + 46, 15, "s2")}${sparkle(cx + 96, cy - 66, 11, "s3")}` : "";
-    return `<svg viewBox="${x} ${y} 536.5 256.5" preserveAspectRatio="none" aria-hidden="true"><defs><clipPath id="${key}"><path d="${piecePaths[i]}"/></clipPath>${closed}</defs>${base}<image class="qp-piece-image" href="${image}" width="1073" height="513" preserveAspectRatio="none" clip-path="url(#${key})"/><path d="${piecePaths[i]}" fill="none" stroke="#FFFFFF" stroke-width="3"/>${badge}</svg>`;
+      ${sparkle(cx - pw * .22, cy - 52, 20, "s1")}${sparkle(cx + pw * .21, cy + 46, 15, "s2")}${sparkle(cx + pw * .18, cy - 66, 11, "s3")}` : "";
+    return `<svg viewBox="${x} ${y} ${pw} ${ph}" preserveAspectRatio="none" aria-hidden="true"><defs><clipPath id="${key}"><path d="${piecePaths[i]}"/></clipPath>${closed}</defs>${base}<image class="qp-piece-image" href="${image}" width="1073" height="513" preserveAspectRatio="none" clip-path="url(#${key})"/><path d="${piecePaths[i]}" fill="none" stroke="#FFFFFF" stroke-width="3"/>${badge}</svg>`;
   };
   let active = true, currentQuestion = null, selectedPiece = null, dragging = null, allFirstTry = true;
   const sourceImage = new Image();
@@ -1640,9 +1726,10 @@ function mountQuestionPuzzle(host, slide) {
     if (active) surface.style.setProperty("--qp-height", (850 * sourceImage.naturalHeight / sourceImage.naturalWidth) + "px");
   };
   sourceImage.src = image;
-  const positionTile = (tile, slot) => {
-    tile.style.left = (slot % 2 * 50) + "%";
-    tile.style.top = (Math.floor(slot / 2) * 50) + "%";
+  const positionTile = (tile, slot) => {   /* [puzzle-5] any layout: the slot's own rectangle */
+    const [x0, y0, x1, y1] = R[slot];
+    tile.style.left = (x0 / 10.73) + "%"; tile.style.top = (y0 / 5.13) + "%";
+    tile.style.width = ((x1 - x0) / 10.73) + "%"; tile.style.height = ((y1 - y0) / 5.13) + "%";
   };
   state.ownsAudio = true;
   $("navBtn").style.display = "none";
@@ -1669,26 +1756,34 @@ function mountQuestionPuzzle(host, slide) {
   };
   // The big question piece: the same jigsaw outline as tile slot `g`, drawn at a uniform BIG scale, framed
   // to the piece's own bounds (tabs included). Its body = the piece's rectangle, padded where a notch bites in.
-  const PIECE_BOUNDS = [[0, 0, 536.5, 256.5], [486, 0, 1073, 256.5], [0, 206, 587, 513], [536.5, 206, 1073, 513]];
-  const PIECE_NOTCH = [{r: 1, b: 1}, {b: 1}, {}, {l: 1}];
-  const BIG = 1.4, EDGE = 8;
+  /* [puzzle-5] bounds = the rectangle grown by every tab it carries; notches = sides bitten into */
+  const PIECE_BOUNDS = R.map(([x0, y0, x1, y1], i) => {
+    const out = e => feats[i].some(k => k.e === e && k.o > 0) ? KD : 0;
+    return [x0 - out("l"), y0 - out("t"), x1 + out("r"), y1 + out("b")];
+  });
+  const PIECE_NOTCH = R.map((_, i) => { const n = {}; feats[i].forEach(k => { if (k.o < 0) n[k.e] = 1; }); return n; });
+  const EDGE = 8;
   const bigPiece = (g) => {
+    /* a narrow piece grows more, so every question gets the same ~750px of writing width */
+    /* ...but never taller than the original big piece (~470px), or it runs up under the header */
+    const BIG = Math.min(1.4 * Math.max(1, 536.5 / (R[g][2] - R[g][0])),
+                         470 / ((PIECE_BOUNDS[g][3] - PIECE_BOUNDS[g][1]) + 2 * EDGE));
     const t = PIECE_THEMES[g % PIECE_THEMES.length], [x0, y0, x1, y1] = PIECE_BOUNDS[g], notch = PIECE_NOTCH[g];
     const vx = x0 - EDGE, vy = y0 - EDGE, vw = x1 - x0 + 2 * EDGE, vh = y1 - y0 + 2 * EDGE;
-    const qx = g % 2 * 536.5, qy = Math.floor(g / 2) * 256.5;
+    const qx = R[g][0], qy = R[g][1], qw = R[g][2] - R[g][0], qh = R[g][3] - R[g][1];
     const key = "qp-big-" + (window.__qpClip = (window.__qpClip || 0) + 1);
     const pad = (side) => (notch[side] ? 78 : 30) + "px";
     // shift sideways so the piece's rectangle (not its side tabs) sits in the middle; a top tab keeps its room
-    const shiftX = ((vx + vw) - (qx + 536.5) - (qx - vx)) * BIG;
-    return `<div class="qp-big${g >= 2 ? " ink-dark" : ""}" style="margin-left:${shiftX}px;width:${vw * BIG}px;height:${vh * BIG}px;transform-origin:${(qx - vx + 268.25) * BIG}px ${(qy - vy + 128.25) * BIG}px">
+    const shiftX = ((vx + vw) - (qx + qw) - (qx - vx)) * BIG;
+    return `<div class="qp-big${(g % PIECE_THEMES.length === 2 || g % PIECE_THEMES.length === 3) ? " ink-dark" : ""}" style="margin-left:${shiftX}px;width:${vw * BIG}px;height:${vh * BIG}px;transform-origin:${(qx - vx + qw / 2) * BIG}px ${(qy - vy + qh / 2) * BIG}px">
       <svg viewBox="${vx} ${vy} ${vw} ${vh}" aria-hidden="true"><defs><clipPath id="${key}"><path d="${piecePaths[g]}"/></clipPath>
         <linearGradient id="${key}-g" gradientUnits="userSpaceOnUse" x1="${qx}" y1="${qy}" x2="${qx + 180}" y2="${qy + 256.5}"><stop offset="0" stop-color="${t.light}"/><stop offset="1" stop-color="${t.dark}"/></linearGradient>
         <pattern id="${key}-p" width="40" height="40" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="4.5" fill="#FFFFFF" fill-opacity=".2"/><circle cx="30" cy="30" r="2.6" fill="#FFFFFF" fill-opacity=".14"/></pattern></defs>
         <path d="${piecePaths[g]}" fill="url(#${key}-g)" stroke="${t.edge}" stroke-width="4"/>
         <rect x="${vx}" y="${vy}" width="${vw}" height="${vh}" fill="url(#${key}-p)" clip-path="url(#${key})"/>
-        <ellipse cx="${qx + 150}" cy="${qy + 18}" rx="210" ry="46" fill="#FFFFFF" fill-opacity=".25" clip-path="url(#${key})"/>
+        <ellipse cx="${qx + qw * .28}" cy="${qy + 18}" rx="${qw * .39}" ry="46" fill="#FFFFFF" fill-opacity=".25" clip-path="url(#${key})"/>
         <path d="${piecePaths[g]}" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-opacity=".8"/></svg>
-      <div class="qp-big-body" style="left:${(qx - vx) * BIG}px;top:${(qy - vy) * BIG}px;width:${536.5 * BIG}px;height:${256.5 * BIG}px;padding:22px ${pad("r")} ${notch.b ? "74px" : "24px"} ${pad("l")}"></div>
+      <div class="qp-big-body" style="left:${(qx - vx) * BIG}px;top:${(qy - vy) * BIG}px;width:${qw * BIG}px;height:${qh * BIG}px;padding:22px ${pad("r")} ${notch.b ? "74px" : "24px"} ${pad("l")}"></div>
     </div>`;
   };
   const resetHeader = () => {
@@ -1703,6 +1798,7 @@ function mountQuestionPuzzle(host, slide) {
     tile.dataset.piece = i;
     tile.innerHTML = pieceArt(positions[i], true);
     tile.style.order = positions[i];
+    positionTile(tile, positions[i]);   /* [puzzle-5] */
     tile.setAttribute("aria-label", `प्रश्न ${i + 1} खोलें`);
     tray.appendChild(tile);
     tile.onclick = () => {
@@ -1730,6 +1826,9 @@ function mountQuestionPuzzle(host, slide) {
       dialog.style.setProperty("--qc-dark", "#FFFFFF");
       dialog.style.setProperty("--qc-edge", "rgba(16, 28, 60, .32)");
       dialog.innerHTML = bigPiece(geo);
+      // a narrow piece with text-only answers stacks them as wide one-line buttons instead of three squeezed columns
+      const bodyEl = dialog.querySelector(".qp-big-body");
+      if (parseFloat(bodyEl.style.width) < 650 && q.data.kind !== "fill_blanks" && !(q.data.options || []).some(o => o.img || o.emoji)) dialog.querySelector(".qp-big").classList.add("stack");
       dialog.querySelector(".qp-big-body").innerHTML = `<div class="qp-qcard"><div class="qp-question-text"></div></div><div class="qp-options"></div>`;
       dialog.querySelector(".qp-question-text").textContent = q.prompt_hi;
       const big = dialog.querySelector(".qp-big"), bigBody = dialog.querySelector(".qp-big-body");
@@ -1758,19 +1857,8 @@ function mountQuestionPuzzle(host, slide) {
         ));
       }));
       SwiftPAL.emit("puzzle_question_opened", {slide_id:q.id, piece:i});
-      mountTapOptions({
-        slide:q, host:dialog.querySelector(".qp-options"), signalName:q.data.signal_name || "evidence_qa_first_try",
-        options:q.data.options, shuffle:q.data.shuffle, columnsHint:q.data.options.length,
-        isCorrect:o => o.correct === true, mastery:q.data.mastery === true, nudgeTarget:null,
-        isCurrent:() => active && currentQuestion === q && CARD.slides[state.idx] === slide,
-        optionRenderer:o => {
-          const cell = document.createElement("div");
-          cell.className = "ev-opt";
-          if (o.correct) cell.dataset.ok = "1";
-          cell.innerHTML = (o.img || o.emoji ? imgOrEmoji(o.img, o.emoji, "ev-opt-img", "ev-opt-emoji") : "") + `<span class="ev-opt-lbl">${o.label_hi || ""}</span>`;
-          return cell;
-        },
-        onAnswer:(_, success) => {
+      /* [puzzle-5] the question closes back into its piece - shared by both question kinds */
+      const closeQ = (_, success) => {
           allFirstTry = allFirstTry && success && state.attempts === 0;
           later(() => {
             state.hintActive = false;
@@ -1814,7 +1902,37 @@ function mountQuestionPuzzle(host, slide) {
               }, stillMotion ? 50 : 2300);
             };
           }, 500);
+        };
+      /* hint 2 for a tap question: each option is spoken in turn while its card pulses */
+      const sayOptionsHint = (done) => {
+        const cells = [...dialog.querySelectorAll(".qp-options .opt-cell")];
+        const say = (n) => {
+          if (n >= cells.length || currentQuestion !== q) { done(); return; }
+          const o = q.data.options[+cells[n].dataset.key];
+          cells[n].classList.add("qp-saying");
+          play(o && o.audio ? audioAsset(o.audio) : null, () => { cells[n].classList.remove("qp-saying"); setTimeout(() => say(n + 1), 150); });
+        };
+        say(0);
+      };
+      if (q.data.kind === "fill_blanks")
+        mountFillBlanks(q, dialog.querySelector(".qp-options"), closeQ,
+          () => active && currentQuestion === q && CARD.slides[state.idx] === slide);
+      else
+      mountTapOptions({
+        slide:q, host:dialog.querySelector(".qp-options"), signalName:q.data.signal_name || "evidence_qa_first_try",
+        options:q.data.options, shuffle:q.data.shuffle, columnsHint:q.data.options.length,
+        isCorrect:o => o.correct === true,
+        /* [puzzle-5] hint 2 can be "say all the options" (P4); the 3rd miss can bring the hand (practice) */
+        hintAction: q.data.hint2_say_options ? sayOptionsHint : undefined, mastery:q.data.mastery === true, nudgeTarget:null,
+        isCurrent:() => active && currentQuestion === q && CARD.slides[state.idx] === slide,
+        optionRenderer:o => {
+          const cell = document.createElement("div");
+          cell.className = "ev-opt";
+          if (o.correct) cell.dataset.ok = "1";
+          cell.innerHTML = (o.img || o.emoji ? imgOrEmoji(o.img, o.emoji, "ev-opt-img", "ev-opt-emoji") : "") + `<span class="ev-opt-lbl">${o.label_hi || ""}</span>`;
+          return cell;
         },
+        onAnswer:closeQ,
       });
       read();
     };
@@ -1869,6 +1987,7 @@ function mountQuestionPuzzle(host, slide) {
     zone.className = "qp-slot";
     zone.innerHTML = pieceArt(i, false);
     zone.dataset.slot = i;
+    positionTile(zone, i);   /* [puzzle-5] */
     zone.setAttribute("aria-label", `चित्र का स्थान ${i + 1}`);
     zone.onclick = () => { if (selectedPiece !== null && !isPlaying) drop(selectedPiece, i); };
     board.appendChild(zone);

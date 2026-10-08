@@ -1,0 +1,86 @@
+/* FLN confetti - exact copy of the game build (MTG2A04_L02_S01 style.css). */
+
+/* ===== FLN ANIMATION KIT: confetti BEGIN ===== */
+.fx-confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:60;}
+.fx-confetti .p{position:absolute;top:0;left:var(--x);
+  animation:cfFall var(--fall) linear var(--delay) both;}
+/* Sway shares the rock's PERIOD and lags it by a quarter cycle. A fluttering plate
+   slides in the direction it is tilted - the swing and the rock are one motion, not
+   two independent ones. The negative delay is what creates the quarter-cycle lag. */
+.fx-confetti .w{display:block;perspective:600px;
+  animation:cfGlide var(--rockT) linear var(--delay) infinite both;}
+.fx-confetti .f{display:block;position:relative;transform-style:preserve-3d;
+  width:calc(var(--w) * var(--z));height:calc(var(--h) * var(--z));
+  opacity:var(--dim,1);
+  animation:cfRock var(--rockT) linear var(--delay) infinite both;}
+/* the minority that actually goes end-over-end */
+.fx-confetti .f.tum{animation:cfTumble var(--rockT) linear var(--delay) infinite both;}
+/* two real faces: front bright, back the same hue darkened */
+.fx-confetti .f::before,.fx-confetti .f::after{content:"";position:absolute;inset:0;
+  border-radius:inherit;backface-visibility:hidden;-webkit-backface-visibility:hidden;}
+.fx-confetti .f::before{background:var(--c);}
+.fx-confetti .f::after{background:var(--c2);transform:rotateY(180deg);}
+/* Shape mix. Sizes are deliberately far apart - at 7-11px a rectangle and a square are
+   indistinguishable while tumbling, which makes the whole field read as "all squares". */
+.fx-confetti .sq{--w:8px;  --h:8px;  border-radius:1px;}   /* square    1:1   */
+.fx-confetti .rc{--w:6px;  --h:13px; border-radius:1px;}   /* rectangle 1:2.2 */
+.fx-confetti .ln{--w:2.5px;--h:16px; border-radius:2px;}   /* line      1:6.4 */
+.fx-confetti .st{--w:11px; --h:11px;}                      /* star - needs a few
+                                 more px than the rest for its points to read */
+/* clip-path goes on the FACES, not on .f - clip-path on .f would force
+   transform-style to flat and kill the two-sided tumble */
+.fx-confetti .st::before,.fx-confetti .st::after{
+  clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,
+                    50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);}
+
+/* LINEAR - terminal velocity. `both` is load-bearing: without it delayed pieces
+   sit in a visible row on the top edge until their delay elapses.
+   --drift gives each piece a gentle lean, as if in a faint air current. */
+@keyframes cfFall{
+  0%{transform:translate(0,-40px);opacity:0;}
+  5%{opacity:1;}
+  86%{opacity:1;}
+  100%{transform:translate(var(--drift,0px),var(--dist,820px));opacity:0;}
+}
+/* GLIDE + BOB. Real flutter is NOT sinusoidal: the plate glides at near-constant
+   attitude, then turns sharply. Long glide, quick reversal, linear timing - the
+   keyframe percentages do the shaping.
+   The Y term is vertical speed modulation: the plate falls SLOWER broadside during
+   the glide (max drag) and quicker through the flip (edge-on, min drag). That
+   hesitate-then-drop is what the eye reads as paper. */
+@keyframes cfGlide{
+  0%  {transform:translate(calc(var(--sway) * -1), 0);}
+  45% {transform:translate(var(--sway), calc(var(--bob) * -1));}
+  50% {transform:translate(var(--sway), 0);}
+  95% {transform:translate(calc(var(--sway) * -1), calc(var(--bob) * -1));}
+  100%{transform:translate(calc(var(--sway) * -1), 0);}
+}
+/* FLUTTER - the default, ~78% of pieces. Rocks about ONE axis, capped well short of
+   edge-on, so the face stays toward the viewer. ease-in-out because a turning point
+   is a turning point: it decelerates at max tilt, like any pendulum. */
+/* FLIP. Holds attitude through the glide, then snaps over in 5% of the cycle.
+   Phase-locked to cfGlide by construction - both start at the beginning of a glide,
+   so no offset delay: the flip lands exactly on the direction reversal. */
+@keyframes cfRock{
+  0%  {transform:rotateZ(var(--tilt)) rotateY(var(--yaw)) rotateX(var(--amp));}
+  45% {transform:rotateZ(var(--tilt)) rotateY(var(--yaw)) rotateX(calc(var(--amp) * 0.86));}
+  50% {transform:rotateZ(var(--tilt)) rotateY(var(--yaw)) rotateX(calc(var(--amp) * -1));}
+  95% {transform:rotateZ(var(--tilt)) rotateY(var(--yaw)) rotateX(calc(var(--amp) * -0.86));}
+  100%{transform:rotateZ(var(--tilt)) rotateY(var(--yaw)) rotateX(var(--amp));}
+}
+/* TUMBLE - the other ~22%. One half revolution, face to face. The keyframes dwell
+   near the faces and sweep through edge-on in 16% of the cycle, because a real plate
+   hangs broadside where drag is highest and flips fast through the low-drag edge. */
+@keyframes cfTumble{
+  0%  {transform:rotateZ(var(--tilt)) rotateY(var(--yaw)) rotateX(0deg);}
+  42% {transform:rotateZ(var(--tilt)) rotateY(var(--yaw)) rotateX(72deg);}
+  58% {transform:rotateZ(var(--tilt)) rotateY(var(--yaw)) rotateX(108deg);}
+  100%{transform:rotateZ(var(--tilt)) rotateY(var(--yaw)) rotateX(180deg);}
+}
+/* ===== FLN ANIMATION KIT: confetti END ===== */
+
+/* ---- game level (MTG2A04_L02_S01): the layer covers the whole window; every piece is sized with the stage
+   (--scale = min(window width / 1333, window height / 750) - set by confetti.js) at 1.5x the kit size ---- */
+.fx-layer{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:5000;--fx-size:1.5;}
+.fx-layer .fx-confetti .f{width:calc(var(--w) * var(--z) * var(--scale, 1) * var(--fx-size, 1));
+  height:calc(var(--h) * var(--z) * var(--scale, 1) * var(--fx-size, 1));}

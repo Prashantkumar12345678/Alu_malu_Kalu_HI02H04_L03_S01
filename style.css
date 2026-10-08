@@ -1590,3 +1590,45 @@ body.is-start .sg-mascot{transform:none;animation:none;}
 .qp-big .qp-options .ev-opt-lbl{font-size:30px;}
 /* white sticker answers: a hairline keeps the white rim crisp on the light yellow piece */
 .qp-big .qp-options .opt-cell:not(.correct){outline:1.5px solid rgba(16,28,60,.10);outline-offset:0;}
+
+/* [puzzle-5] the tray and the board place every piece on its own rectangle (set inline by
+   positionTile), so they are no longer grids - any number of pieces of any width fits. */
+.qp-surface .qp-cards,.qp-surface .qp-board{display:block !important;}
+.qp-surface .qp-tile,.qp-surface .qp-slot{position:absolute;}
+/* hint 2: the card whose word is being said */
+.opt-cell.qp-saying{animation:qpSaying .55s ease-in-out infinite alternate;outline:4px solid #1E96F0;outline-offset:3px;}
+@keyframes qpSaying{from{transform:scale(1);}to{transform:scale(1.06);}}
+/* fill the blanks */
+.fb-wrap{display:flex;flex-direction:column;align-items:center;gap:26px;width:100%;}
+.fb-line{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-end;gap:10px 14px;
+  font-family:var(--font-hi);font-weight:800;font-size:38px;line-height:1.25;color:var(--navy);
+  background:#FFFFFF;border-radius:20px;padding:14px 26px;box-shadow:0 5px 0 rgba(16,28,60,.18);}
+.fb-blank{display:inline-block;min-width:3.4em;height:1.25em;border-bottom:4px solid var(--navy);text-align:center;}
+.fb-blank.fb-active{border-bottom-color:#1E96F0;animation:fbBlink 1.1s ease-in-out infinite;}
+@keyframes fbBlink{0%,100%{border-bottom-color:#1E96F0;}50%{border-bottom-color:rgba(30,150,240,.25);}}
+.fb-blank.fb-filled{min-width:0;border-bottom-color:transparent;color:#8A5CF6;animation:none;}
+.fb-blank.fb-pop{animation:fbPop .35s ease-out;}
+@keyframes fbPop{from{transform:scale(1.3);}to{transform:scale(1);}}
+.fb-line.fb-done .fb-blank{color:var(--navy);}
+.fb-opt.fb-used{visibility:hidden;}
+.fb-opts .ev-opt-lbl{font-size:36px;}
+.fb-fly{position:fixed;z-index:9999;pointer-events:none;font-family:var(--font-hi);font-weight:800;color:#8A5CF6;line-height:1.2;}
+@media(prefers-reduced-motion:reduce){.fb-blank.fb-active,.opt-cell.qp-saying{animation:none;}}
+/* narrow piece + text answers: one column of wide buttons */
+.qp-big.stack .qp-big-body{gap:14px;}
+.qp-big.stack .qp-qcard{margin:0 0 4px;}
+.qp-big.stack .qp-options .opt-grid{grid-template-columns:1fr;gap:12px;}
+.qp-big.stack .qp-options .opt-cell{min-height:54px;padding:6px 14px;}
+.qp-big.stack .qp-options .ev-opt-lbl{font-size:27px;white-space:nowrap;}
+/* stacked answers: compact enough that a two-line question + three answers fit even a notched piece */
+.qp-big.stack .qp-big-body{gap:10px;}
+.qp-big.stack .qp-qcard{margin:0;padding:6px 18px;}
+.qp-big.stack .qp-question-text{font-size:26px;line-height:1.2;}
+.qp-big.stack .qp-options .opt-grid{gap:10px;}
+.qp-big.stack .qp-options .opt-cell{min-height:48px;padding:4px 14px;}
+.qp-big.stack .qp-options .ev-opt-lbl{font-size:25px;}
+/* landing play button: 140x140 (same centre as before) */
+.sg-btn{left:549px;top:277.5px;width:140px;height:140px;background-size:140px 140px;}
+
+/* title-screen speaker a little bigger: 58 -> 70px (+20%), same centre (moved 6px left/up) */
+.sg-vo{left:74px;top:389px;width:70px;height:70px;}
