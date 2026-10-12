@@ -491,6 +491,12 @@ function audioFor(slide, key) {
   if (!slide.audio || !slide.audio[key]) return null;
   return audioAsset(slide.audio[key]);
 }
+/* Review 1: every correct answer ends on "शाबाश!" with the confetti burst landing on it (reference
+   HI02H11: tapped word → शाबाश → short beat → next). The answer word is never repeated after it. */
+function playShabash(cb) {
+  confettiCannon();
+  play(audioAsset("vo_shabash"), cb);
+}
 function audioAsset(id) {
   return (CARD.assets && CARD.assets.audio && CARD.assets.audio[id]) ||
     "assets/Audio/" + id + "." + AUDIO_EXT;
@@ -786,7 +792,6 @@ function mountTapOptions({
         state.locked = true;
         cell.classList.add("correct");
         sfxCorrect();
-        confettiCannon();
         setSwMood("happy");
         if (mastery) {
           state.masteryAttempts++;
@@ -801,7 +806,10 @@ function mountTapOptions({
           scaffold_level: state.scaffoldLevel,
           latency_ms: Date.now() - state.slideStart,
         });
-        _afterWord(() => { if (isCurrent()) (onAnswer || finishAnswer)(slide, true); });
+        _afterWord(() => {
+          if (!isCurrent()) return;
+          playShabash(() => { if (isCurrent()) (onAnswer || finishAnswer)(slide, true); });
+        });
       } else {
         state.attempts++;
         cell.classList.add("wrong-flash");
@@ -822,6 +830,11 @@ function mountTapOptions({
           // speak the tapped word FIRST, then the layered feedback VO (no overlap)
           if (state.attempts >= _maxA) {
             revealAnswer("wrong");
+          } else if (walkHint) {
+            // Review 1 ladder: 1st wrong = the wiggle + the tapped word only, no feedback VO;
+            // 2nd wrong = the question again, then every option glows while it says its own word.
+            state.scaffoldLevel = Math.max(state.scaffoldLevel, state.attempts >= 2 ? 2 : 1);
+            if (state.attempts >= 2) walkOptions();
           } else if (state.attempts >= 2) {
             state.scaffoldLevel = Math.max(state.scaffoldLevel, 2);
             if (runHint) runHint();
@@ -841,6 +854,66 @@ function mountTapOptions({
   });
   wrap.appendChild(grid);
   host.appendChild(wrap);
+
+  // ---- Review 1 (reference HI02H11): options arrive one by one, and the hint-2 walk ----
+  const _d = slide.data || {};
+  const walkHint = _d.walk_hint === true;
+  const _cells = () => [..._grid().querySelectorAll(".opt-cell")];
+  function _grid() { return grid; }
+  const _optAudio = (c) => {
+    const o = _opts[+c.dataset.key];
+    return o && o.audio ? audioAsset(o.audio) : null;
+  };
+  // each card in screen order: glow, say its own word, a short breath, the next
+  function _sayEach(cells, onEach, done) {
+    let k = 0;
+    const next = () => {
+      if (!isCurrent()) return;
+      if (k >= cells.length) { done(); return; }
+      const c = cells[k++];
+      onEach(c);
+      c.classList.add("qp-saying");
+      play(_optAudio(c), () => {
+        c.classList.remove("qp-saying");
+        setTimeout(next, 180);
+      });
+    };
+    next();
+  }
+  function walkOptions(after) {
+    state.hintActive = true;
+    setSwMood("hint");
+    const live = _cells().filter((c) => !c.classList.contains("faded"));
+    play(audioFor(slide, "question") || audioFor(slide, "prompt") || null, () => {
+      if (!isCurrent()) return;
+      _sayEach(live, () => {}, () => {
+        state.hintActive = false;
+        if (after) after();
+      });
+    });
+  }
+  // the question plays in full, THEN each option fades in on its own word; taps open after the last
+  function revealOptionsInTurn() {
+    const cells = _cells();
+    cells.forEach((c) => c.classList.add("opt-seq-hidden"));
+    state.locked = true;
+    let opened = false;
+    const open = () => {
+      if (opened) return;
+      opened = true;
+      cells.forEach((c) => c.classList.remove("opt-seq-hidden", "qp-saying"));
+      state.locked = false;
+    };
+    play(audioFor(slide, "question") || audioFor(slide, "prompt") || null, () => {
+      if (!isCurrent()) return;
+      _sayEach(cells, (c) => c.classList.remove("opt-seq-hidden"), open);
+    });
+    setTimeout(() => { if (isCurrent()) open(); }, 20000); // safety net: never a dead question
+  }
+  state.replayAudio = () => {
+    if (state.locked || state.hintActive || isPlaying) return;
+    play(audioFor(slide, "question") || audioFor(slide, "prompt") || null, () => {});
+  };
 
   // ---- layered-hint helpers (A1/B2): reveal-on-max + a wired manual hint button ----
   function _correctCell() {
@@ -867,10 +940,8 @@ function mountTapOptions({
         el.classList.remove("reveal-hold");
         el.classList.add("correct");
         sfxCorrect();
-        confettiCannon();
         setSwMood("happy");
-        play(audioFor(slide, "correct") || null,
-          () => { if (isCurrent()) (onAnswer || finishAnswer)(slide, false); });
+        playShabash(() => { if (isCurrent()) (onAnswer || finishAnswer)(slide, false); });
       };
       if (slide.phase === "guided" || (slide.data && slide.data.reveal_hand)) pointNudgeAt(el);   /* [puzzle-5] */
     }
@@ -893,7 +964,8 @@ function mountTapOptions({
     state.hintUsed = true;
     if (state.attempts < 1) state.attempts = 1;
     SwiftPAL.emit("hint_shown", { slide_id: slide.id, manual: true });
-    if (runHint) runHint();
+    if (walkHint) walkOptions();
+    else if (runHint) runHint();
     else
       play(
         audioFor(slide, "hint") || audioFor(slide, "try_again") || null,
@@ -906,6 +978,9 @@ function mountTapOptions({
   // a RIGHT tap = confetti cannons + Swiftie cheer, then auto-advance. No select-then-आगे for pick questions.
   $("navBtn").style.display = "none";
   setNavActive(false);
+  // data.reveal_seq: this module owns the opening audio (question, then the options one by one) -
+  // callers check the same flag and skip their own prompt.
+  if (_d.reveal_seq && !_d.auto) revealOptionsInTurn();
 }
 
 /* ---------- 10. RENDER HELPERS ---------- */
@@ -1418,8 +1493,8 @@ function evPassage(p, opts) {
   card._lines = lines;
   return card;
 }
-function evWordKaraoke(line, readingDuration) {
-  const words = [...line.querySelectorAll(".ev-word")];
+function evWordKaraoke(line, readingDuration, from = 0, to) {
+  const words = [...line.querySelectorAll(".ev-word")].slice(from, to);
   if (!words.length) return () => {};
   const weights = words.map((word) => {
     const text = word.textContent || "";
@@ -1581,10 +1656,11 @@ function mountFillBlanks(q, host, onDone, isCurrent) {
     done = true; state.locked = true; stopNudge();
     cells.forEach(c => c.classList.remove("reveal-hold"));
     line.classList.add("fb-done");
-    sfxCorrect(); confettiCannon(); setSwMood("happy");
+    sfxCorrect(); setSwMood("happy");
     SwiftPAL.emit(d.signal_name || "evidence_qa_first_try", { slide_id: q.id, phase: q.phase, value: true, first_try: wrong === 0,
       attempts: wrong + 1, scaffold_level: state.scaffoldLevel, latency_ms: Date.now() - state.slideStart });
-    play(audioFor(q, "correct") || null, () => { if (isCurrent()) onDone(q, wrong === 0); });
+    // शाबाश + confetti first, then the finished sentence is read back
+    playShabash(() => { if (isCurrent()) play(audioFor(q, "correct") || null, () => { if (isCurrent()) onDone(q, wrong === 0); }); });
   };
   showActive();
   cells.forEach(cell => {
@@ -1609,7 +1685,7 @@ function mountFillBlanks(q, host, onDone, isCurrent) {
       SwiftPAL.emit("answer_wrong", { slide_id: q.id, phase: q.phase, attempts: state.attempts });
       play(wordAudio(w), () => {
         if (!isCurrent()) return;
-        if (wrong === 1) { state.scaffoldLevel = 1; play(audioFor(q, "try_again") || null, () => { busy = false; }); }
+        if (wrong === 1) { state.scaffoldLevel = 1; busy = false; }   // Review 1: 1st wrong = the wiggle + the tapped word, no VO
         else if (wrong === 2) { state.scaffoldLevel = 2; sayAll(() => { busy = false; }); }
         else { state.scaffoldLevel = 3; handOn = true; setSwMood("hint"); pointAtAnswer();
                play(audioFor(q, "reveal") || null, () => { busy = false; }); }
@@ -1690,6 +1766,7 @@ function mountQuestionPuzzle(host, slide) {
   const squash = (536.5 / 256.5) / (16 / 9);
   const sparkle = (cx, cy, r, cls) =>
     `<path class="qp-spark ${cls}" d="M${cx} ${cy - r}Q${cx} ${cy} ${cx + r * .62} ${cy}Q${cx} ${cy} ${cx} ${cy + r}Q${cx} ${cy} ${cx - r * .62} ${cy}Q${cx} ${cy} ${cx} ${cy - r}Z" fill="#FFFFFF"/>`;
+  const QP_Q = .8;   // Review: only the "?" sign inside the badge is a little smaller (circle unchanged)
   const pieceArt = (i, questionMark) => {
     const [x, y, x1r, y1r] = R[i], pw = x1r - x, ph = y1r - y;   /* [puzzle-5] */
     const key = "qp-cut-" + (window.__qpClip = (window.__qpClip || 0) + 1);
@@ -1708,14 +1785,14 @@ function mountQuestionPuzzle(host, slide) {
         <circle r="64" cy="7" fill="${t.edge}" fill-opacity=".35"/>
         <circle r="64" fill="#FFFFFF" stroke="${t.edge}" stroke-width="7"/>
         <circle r="50" fill="none" stroke="${t.light}" stroke-width="5" stroke-dasharray="6 10" stroke-linecap="round"/>
-        <g class="qp-q" fill="none" stroke-linecap="round" stroke-linejoin="round">${/* a drawn, chunky "?" (same on every device, unlike a font glyph): soft shadow, thick stroke, candy highlight */""}
+        <g transform="scale(${QP_Q})"><g class="qp-q" fill="none" stroke-linecap="round" stroke-linejoin="round">${/* a drawn, chunky "?" (same on every device, unlike a font glyph): soft shadow, thick stroke, candy highlight */""}
           <path d="M-21 -20C-21 -45 23 -45 23 -21C23 -5 2 -4 2 13" stroke="rgba(0,0,0,.14)" stroke-width="18" transform="translate(0 4)"/>
           <path d="M-21 -20C-21 -45 23 -45 23 -21C23 -5 2 -4 2 13" stroke="${t.edge}" stroke-width="18"/>
           <path d="M-14 -27C-9 -37 8 -38 14 -30" stroke="${t.light}" stroke-width="5" opacity=".9"/>
           <circle cx="2" cy="38" r="11" fill="rgba(0,0,0,.14)" stroke="none" transform="translate(0 4)"/>
           <circle cx="2" cy="38" r="11" fill="${t.edge}" stroke="none"/>
           <circle cx="-1" cy="35" r="3.5" fill="${t.light}" stroke="none" opacity=".9"/>
-        </g>
+        </g></g>
       </g></g>
       ${sparkle(cx - pw * .22, cy - 52, 20, "s1")}${sparkle(cx + pw * .21, cy + 46, 15, "s2")}${sparkle(cx + pw * .18, cy - 66, 11, "s3")}` : "";
     return `<svg viewBox="${x} ${y} ${pw} ${ph}" preserveAspectRatio="none" aria-hidden="true"><defs><clipPath id="${key}"><path d="${piecePaths[i]}"/></clipPath>${closed}</defs>${base}<image class="qp-piece-image" href="${image}" width="1073" height="513" preserveAspectRatio="none" clip-path="url(#${key})"/><path d="${piecePaths[i]}" fill="none" stroke="#FFFFFF" stroke-width="3"/>${badge}</svg>`;
@@ -1752,7 +1829,7 @@ function mountQuestionPuzzle(host, slide) {
     const s = wrap.getBoundingClientRect().width / wrap.offsetWidth || 1;
     const dx = (t.left + t.width / 2 - (b.left + b.width / 2)) / s;
     const dy = (t.top + t.height / 2 - (b.top + b.height / 2)) / s;
-    return `translate(${dx}px, ${dy}px) scale(${t.width / b.width})`;
+    return `translate(${dx}px, ${dy}px) scale(${t.width / b.width}, ${t.height / b.height})`;
   };
   // The big question piece: the same jigsaw outline as tile slot `g`, drawn at a uniform BIG scale, framed
   // to the piece's own bounds (tabs included). Its body = the piece's rectangle, padded where a notch bites in.
@@ -1766,24 +1843,27 @@ function mountQuestionPuzzle(host, slide) {
   const bigPiece = (g) => {
     /* a narrow piece grows more, so every question gets the same ~750px of writing width */
     /* ...but never taller than the original big piece (~470px), or it runs up under the header */
-    const BIG = Math.min(1.4 * Math.max(1, 536.5 / (R[g][2] - R[g][0])),
-                         470 / ((PIECE_BOUNDS[g][3] - PIECE_BOUNDS[g][1]) + 2 * EDGE));
+    const BY = Math.min(1.4 * Math.max(1, 536.5 / (R[g][2] - R[g][0])),
+                        470 / ((PIECE_BOUNDS[g][3] - PIECE_BOUNDS[g][1]) + 2 * EDGE));
+    /* Review 1 ("puzzle part छोटा लग रहा है"): the open piece grows SIDEWAYS only - up to 1.4x wider than
+       its height scale, never past ~1150px - so the height (and the header clearance) stays as it was */
+    const BX = Math.min(BY * 1.4, 1150 / ((PIECE_BOUNDS[g][2] - PIECE_BOUNDS[g][0]) + 2 * EDGE));
     const t = PIECE_THEMES[g % PIECE_THEMES.length], [x0, y0, x1, y1] = PIECE_BOUNDS[g], notch = PIECE_NOTCH[g];
     const vx = x0 - EDGE, vy = y0 - EDGE, vw = x1 - x0 + 2 * EDGE, vh = y1 - y0 + 2 * EDGE;
     const qx = R[g][0], qy = R[g][1], qw = R[g][2] - R[g][0], qh = R[g][3] - R[g][1];
     const key = "qp-big-" + (window.__qpClip = (window.__qpClip || 0) + 1);
     const pad = (side) => (notch[side] ? 78 : 30) + "px";
     // shift sideways so the piece's rectangle (not its side tabs) sits in the middle; a top tab keeps its room
-    const shiftX = ((vx + vw) - (qx + qw) - (qx - vx)) * BIG;
-    return `<div class="qp-big${(g % PIECE_THEMES.length === 2 || g % PIECE_THEMES.length === 3) ? " ink-dark" : ""}" style="margin-left:${shiftX}px;width:${vw * BIG}px;height:${vh * BIG}px;transform-origin:${(qx - vx + qw / 2) * BIG}px ${(qy - vy + qh / 2) * BIG}px">
-      <svg viewBox="${vx} ${vy} ${vw} ${vh}" aria-hidden="true"><defs><clipPath id="${key}"><path d="${piecePaths[g]}"/></clipPath>
+    const shiftX = ((vx + vw) - (qx + qw) - (qx - vx)) * BX;
+    return `<div class="qp-big${(g % PIECE_THEMES.length === 2 || g % PIECE_THEMES.length === 3) ? " ink-dark" : ""}" style="margin-left:${shiftX}px;width:${vw * BX}px;height:${vh * BY}px;transform-origin:${(qx - vx + qw / 2) * BX}px ${(qy - vy + qh / 2) * BY}px">
+      <svg viewBox="${vx} ${vy} ${vw} ${vh}" preserveAspectRatio="none" aria-hidden="true"><defs><clipPath id="${key}"><path d="${piecePaths[g]}"/></clipPath>
         <linearGradient id="${key}-g" gradientUnits="userSpaceOnUse" x1="${qx}" y1="${qy}" x2="${qx + 180}" y2="${qy + 256.5}"><stop offset="0" stop-color="${t.light}"/><stop offset="1" stop-color="${t.dark}"/></linearGradient>
         <pattern id="${key}-p" width="40" height="40" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="4.5" fill="#FFFFFF" fill-opacity=".2"/><circle cx="30" cy="30" r="2.6" fill="#FFFFFF" fill-opacity=".14"/></pattern></defs>
         <path d="${piecePaths[g]}" fill="url(#${key}-g)" stroke="${t.edge}" stroke-width="4"/>
         <rect x="${vx}" y="${vy}" width="${vw}" height="${vh}" fill="url(#${key}-p)" clip-path="url(#${key})"/>
         <ellipse cx="${qx + qw * .28}" cy="${qy + 18}" rx="${qw * .39}" ry="46" fill="#FFFFFF" fill-opacity=".25" clip-path="url(#${key})"/>
         <path d="${piecePaths[g]}" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-opacity=".8"/></svg>
-      <div class="qp-big-body" style="left:${(qx - vx) * BIG}px;top:${(qy - vy) * BIG}px;width:${qw * BIG}px;height:${qh * BIG}px;padding:22px ${pad("r")} ${notch.b ? "74px" : "24px"} ${pad("l")}"></div>
+      <div class="qp-big-body" style="left:${(qx - vx) * BX}px;top:${(qy - vy) * BY}px;width:${qw * BX}px;height:${qh * BY}px;padding:22px ${pad("r")} ${notch.b ? "74px" : "24px"} ${pad("l")}"></div>
     </div>`;
   };
   const resetHeader = () => {
@@ -1816,7 +1896,9 @@ function mountQuestionPuzzle(host, slide) {
       stopNudge();
       currentQuestion = q;
       state.slideStart = Date.now();
-      $("promptText").textContent = "सही उत्तर चुनिए";
+      // Review 1: the fill-in question's instruction IS the heading ("सही शब्द चुनकर वाक्य पूरा कीजिए")
+      const isFill = q.data.kind === "fill_blanks";
+      $("promptText").textContent = isFill ? q.prompt_hi : "सही उत्तर चुनिए";
       $("promptText").classList.remove("compact");
       // The tapped piece itself grows into a big copy (same colour, same jigsaw shape) and the question and
       // answers are written ON it, inside the piece's own rectangle (never over a tab or into a notch).
@@ -1831,6 +1913,7 @@ function mountQuestionPuzzle(host, slide) {
       if (parseFloat(bodyEl.style.width) < 650 && q.data.kind !== "fill_blanks" && !(q.data.options || []).some(o => o.img || o.emoji)) dialog.querySelector(".qp-big").classList.add("stack");
       dialog.querySelector(".qp-big-body").innerHTML = `<div class="qp-qcard"><div class="qp-question-text"></div></div><div class="qp-options"></div>`;
       dialog.querySelector(".qp-question-text").textContent = q.prompt_hi;
+      if (isFill) dialog.querySelector(".qp-qcard").hidden = true;   // already in the heading
       const big = dialog.querySelector(".qp-big"), bigBody = dialog.querySelector(".qp-big-body");
       sfxPuzzleOpen();
       dialog.hidden = false; // must be visible before measuring, or the big piece has no size yet
@@ -1897,6 +1980,9 @@ function mountQuestionPuzzle(host, slide) {
                   board.hidden = false;
                   // Keep the revealed, mixed-up arrangement until the learner moves it.
                   tiles.forEach((piece, n) => positionTile(piece, positions[n]));
+                  // a piece that starts in its own slot is already right - snap it in (drop() then settles the rest)
+                  const own = positions.findIndex((slot, piece) => slot === piece && !placed.has(piece));
+                  if (own !== -1) later(() => drop(own, own), 600);
                   read();
                 }
               }, stillMotion ? 50 : 2300);
@@ -1934,7 +2020,9 @@ function mountQuestionPuzzle(host, slide) {
         },
         onAnswer:closeQ,
       });
-      read();
+      if (!q.data.reveal_seq || q.data.kind === "fill_blanks") read();
+      // keep the puzzle's own replay (it knows which question is open) instead of the module's
+      state.replayAudio = read;
     };
     return tile;
   });
@@ -1965,20 +2053,22 @@ function mountQuestionPuzzle(host, slide) {
     sfxPieceSnap();
     later(sfxCorrect, 110);
     SwiftPAL.emit("puzzle_piece_placed", {slide_id:pieceQuestions[i].id, piece:i, pieces:placed.size});
-    if (placed.size === questions.length - 1) {
-      const lastPiece = positions.findIndex((slot, piece) => !placed.has(piece) && slot === piece);
-      if (lastPiece !== -1) {
-        drop(lastPiece, lastPiece);
-        return;
-      }
+    // A piece that the swap above just slid into ITS OWN slot looks finished, so it IS finished: snap it
+    // in now instead of making the child tap a piece that is already right (it used to happen only for
+    // the very last piece, and only sometimes - reported as "5 pieces, then I have to tap the 6th").
+    const settled = positions.findIndex((slot, piece) => !placed.has(piece) && slot === piece);
+    if (settled !== -1) {
+      later(() => drop(settled, settled), 260);
+      return;
     }
     if (placed.size === questions.length) {
       wrap.classList.add("complete");
       $("promptText").textContent = "चित्र पूरा हो गया!";
       SwiftPAL.emit("puzzle_completed", {pieces:placed.size});
-      confettiCannon();
       setSwMood("happy");
-      later(() => completeSlide(allFirstTry), 2200);
+      // Review 1: let the finished picture sit for a moment (1.5s), THEN the confetti
+      later(() => { sfxCorrect(); confettiCannon(); }, 1500);
+      later(() => completeSlide(allFirstTry), 3700);
     }
   };
   questions.forEach((_, i) => {
@@ -2112,11 +2202,23 @@ function mountReadingPractice(host, slide) {
     mic.disabled=true;
     mic.setAttribute("aria-disabled", "true");
     setNavActive(false);
+    const done=()=>{
+      if(!current())return;
+      mode="done";setNavActive(true);
+    };
+    // data.sfx_after: a sound effect that follows the narrated sentence (e.g. the puppy's भौं-भौं on page 8).
+    // data.sfx_words: how many trailing words the SFX "says" — the VO highlights the rest, the SFX lights these.
+    const sfx=slide.data.sfx_after;
+    const total=line.querySelectorAll(".ev-word").length;
+    const split=sfx?total-(slide.data.sfx_words||0):total;
     play(line._src,()=>{
       if(!current())return;
-      stopWords();mode="done";setNavActive(true);
+      stopWords();
+      if(!sfx)return done();
+      play(audioAsset(sfx),()=>{if(!current())return;stopWords();done();});
+      if(split<total)stopWords=evWordKaraoke(line,undefined,split);
     });
-    stopWords=evWordKaraoke(line);
+    stopWords=evWordKaraoke(line,undefined,0,split);
   };
   mic.onclick=()=>{
     if(!current() || mic.disabled || mode!=="ready")return;
@@ -4589,7 +4691,6 @@ const SlideModules = {
             hs.classList.remove("reveal-hold");
             hs.classList.add("hit");
             sfxCorrect();
-            confettiCannon();
             setSwMood("happy");
             SwiftPAL.emit(d.signal_name || "scene_tap_first_try", {
               slide_id: slide.id,
@@ -4599,7 +4700,7 @@ const SlideModules = {
               attempts: sceneAttempts + 1,
             });
             play(audioFor(slide, "correct") || null, () =>
-              setTimeout(() => completeSlide(true), 900),
+              playShabash(() => setTimeout(() => completeSlide(true), 700)),
             );
           } else {
             hs.classList.add("shake");
@@ -4818,7 +4919,7 @@ const SlideModules = {
         state.replayAudio = () => seq(arm);
         seq(arm);
         setTimeout(arm, 60000);
-      } else {
+      } else if (!d.reveal_seq) {
         state.replayAudio = () =>
           play(audioFor(slide, "prompt") || null, () => {});
         play(audioFor(slide, "prompt") || null, () => {});
@@ -5194,7 +5295,13 @@ const SlideModules = {
       const d = slide.data || {};
       const phaseGate = $("phaseGate");
       const phaseGateImg = $("phaseGateImg");
-      $("phaseGateTitle").textContent = slide.id === "PT1" ? "चलिए, शुरू करते हैं!" : "";
+      // Headline arrives WITH its words (reference HI02H11): blank until the VO says it, then it writes
+      // itself left to right. data.caption = {text, at_ms}; at_ms is measured off the gate's own VO clip.
+      const title = $("phaseGateTitle");
+      title.textContent = "";
+      title.classList.remove("pg-pop");
+      const cap = d.caption;
+      let capTimer = null;
       const vo = audioFor(slide, "prompt");
       const openedAt = Date.now();
       let finished = false;
@@ -5218,9 +5325,12 @@ const SlideModules = {
         if (finished || CARD.slides[state.idx] !== slide) return;
         finished = true;
         clearTimeout(watchdog);
+        clearTimeout(capTimer);
         phaseGate.classList.add("sink");
         setTimeout(() => {
           if (CARD.slides[state.idx] !== slide) return;
+          title.textContent = "";
+          title.classList.remove("pg-pop");
           phaseGate.classList.remove("show", "sink");
           phaseGate.setAttribute("aria-hidden", "true");
           $("stage").classList.remove("blurred", "gating");
@@ -5232,6 +5342,13 @@ const SlideModules = {
         }, 340);
       };
       watchdog = setTimeout(finish, 12000);
+      if (cap && cap.text)
+        capTimer = setTimeout(() => {
+          if (finished || CARD.slides[state.idx] !== slide) return;
+          title.textContent = cap.text;
+          void title.offsetWidth;
+          title.classList.add("pg-pop");
+        }, cap.at_ms || 0);
       play(vo || null, () =>
         setTimeout(finish, Math.max(0, 2000 - (Date.now() - openedAt))),
       );

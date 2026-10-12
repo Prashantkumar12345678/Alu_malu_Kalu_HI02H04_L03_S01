@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 440" width="440" height="440">
+  <!-- बैंगन option, drawn to match opt_tamatar: flat fill, thick grey outline, white gloss -->
+  <defs>
+    <linearGradient id="bodyFill" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8E3FC0"/>
+      <stop offset="1" stop-color="#5B1E86"/>
+    </linearGradient>
+  </defs>
+  <g transform="rotate(-28 220 230)">
+    <!-- body: narrow at the top, round at the bottom -->
+    <path d="M220 120
+             C265 120 282 160 290 205
+             C298 250 330 285 330 335
+             C330 395 280 425 220 425
+             C160 425 110 395 110 335
+             C110 285 142 250 150 205
+             C158 160 175 120 220 120 Z"
+          fill="url(#bodyFill)" stroke="#4A4A4A" stroke-width="10" stroke-linejoin="round"/>
+    <!-- shadow side -->
+    <path d="M290 215 C298 255 322 290 322 335 C322 385 285 412 235 417 C275 395 296 360 292 320 C289 285 278 255 290 215 Z"
+          fill="#4A1670" opacity=".55"/>
+    <!-- gloss -->
+    <path d="M168 240 C160 275 146 300 146 335" fill="none" stroke="#FFFFFF" stroke-width="16" stroke-linecap="round" opacity=".75"/>
+    <circle cx="150" cy="365" r="9" fill="#FFFFFF" opacity=".7"/>
+    <!-- green cap (calyx) -->
+    <path d="M160 150
+             C175 118 200 108 220 108
+             C240 108 265 118 280 150
+             C262 142 252 150 250 168
+             C240 150 230 152 220 172
+             C210 152 200 150 190 168
+             C188 150 178 142 160 150 Z"
+          fill="#7DC242" stroke="#4A4A4A" stroke-width="9" stroke-linejoin="round"/>
+    <path d="M185 132 C200 124 214 122 226 124" fill="none" stroke="#B5E07A" stroke-width="7" stroke-linecap="round"/>
+    <!-- stem -->
+    <path d="M208 110 L204 52 C204 40 236 40 236 52 L232 110 Z"
+          fill="#A0522D" stroke="#4A4A4A" stroke-width="9" stroke-linejoin="round"/>
+  </g>
+</svg>
