@@ -147,7 +147,7 @@ function play(src, onEnd) {
     if (onEnd) onEnd();
   };
   if (src) {
-    const a = new Audio(src);
+    const a = new Audio(AssetLoader.url(src));
     currentAudio = a;
     a.onended = fire;
     a.onerror = () => {
@@ -215,7 +215,7 @@ function _sfxFile(name) {
   if (last[name] && now - last[name] < 150) return true;
   last[name] = now;
   try {
-    const a = new Audio("assets/SFX/" + name + ".wav");
+    const a = new Audio(AssetLoader.url("assets/SFX/" + name + ".wav"));
     a.volume = 0.7;
     a.play().catch(() => {});
     return true;
@@ -246,7 +246,7 @@ function bgmUpdate() {
 }
 function bgmStart() {
   try {
-    if (!_bgm) { _bgm = new Audio("assets/SFX/bgm_mela.wav"); _bgm.loop = true; _bgm.volume = 0; }
+    if (!_bgm) { _bgm = new Audio(AssetLoader.url("assets/SFX/bgm_mela.wav")); _bgm.loop = true; _bgm.volume = 0; }
     _bgmOn = true;
     bgmUpdate();
   } catch (e) {}
@@ -562,6 +562,65 @@ function audioFor(slide, key) {
   if (!slide.audio || !slide.audio[key]) return null;
   return audioAsset(slide.audio[key]);
 }
+/* ---------- ASSET PRELOADER (reference HI02H11 AssetLoader, trimmed) ----------
+   Every file the lesson plays or shows is downloaded once, up front, behind the title screen, and kept
+   as an in-memory blob: on a deployed build nothing then waits on the network mid-lesson (a voice that
+   starts late, a picture that pops in). The greeting is fetched first, alone. url(src) hands back the
+   blob: URL when the file is in, else the original path - so a file:// run (where fetch is refused) or a
+   failed download just behaves as before. ready resolves when every file has settled (30s at most). */
+const AssetLoader = (() => {
+  const blobs = {}, listeners = [];
+  let total = 0, settled = 0, started = false, resolveReady;
+  const ready = new Promise((r) => (resolveReady = r));
+  const pct = () => (total ? Math.round((settled / total) * 100) : 100);
+  const emit = () => listeners.forEach((f) => { try { f(pct()); } catch (e) {} });
+  const fetchOne = (u) =>
+    fetch(u)
+      .then((r) => (r.ok ? r.blob() : null))
+      .then((b) => { if (b) blobs[u] = URL.createObjectURL(b); })
+      .catch(() => {});
+  return {
+    ready,
+    url: (src) => (src && blobs[src]) || src,
+    has: (src) => !!blobs[src],
+    onProgress(f) { listeners.push(f); f(pct()); },
+    /* first: fetched alone before the rest; list: everything else (deduped) */
+    start(first, list) {
+      if (started) return;
+      started = true;
+      const all = [...new Set([...(first || []), ...(list || [])].filter(Boolean))];
+      total = all.length;
+      emit();
+      const queue = all.filter((u) => !(first || []).includes(u));
+      const done1 = () => { settled++; emit(); if (settled >= total) resolveReady(); };
+      Promise.all((first || []).map((u) => fetchOne(u).then(done1))).then(() => {
+        let i = 0;
+        const worker = () => { if (i >= queue.length) return Promise.resolve(); const u = queue[i++]; return fetchOne(u).then(done1).then(worker); };
+        for (let k = 0; k < 6; k++) worker();
+        if (!queue.length && settled >= total) resolveReady();
+      });
+      setTimeout(resolveReady, 30000); // a stalled download can never hold the title screen
+    },
+  };
+})();
+/* every file this card can play or show: any audio/image id that appears anywhere in the slides, the
+   engine's own fixed clips, the SFX/music, and the UI art used after the title screen */
+function lessonAssetUrls() {
+  const A = (CARD.assets || {}), aud = A.audio || {}, img = A.image || {}, out = new Set();
+  const walk = (v) => {
+    if (typeof v === "string") { if (aud[v]) out.add(aud[v]); if (img[v]) out.add(img[v]); }
+    else if (Array.isArray(v)) v.forEach(walk);
+    else if (v && typeof v === "object") Object.values(v).forEach(walk);
+  };
+  walk(CARD.slides);
+  ["vo_landing", "vo_shabash", "vo_o_kaalu", "vo_review_identify_correct", "vo_review_puzzle_assemble"].forEach((k) => aud[k] && out.add(aud[k]));
+  ["sfx_correct", "sfx_wrong", "sfx_tap", "sfx_next", "sfx_play", "sfx_whoosh", "bgm_mela"].forEach((k) => out.add("assets/SFX/" + k + ".wav"));
+  ["sw_head_talking", "sw_head_celebrate_anim", "sw_head_hint_anim", "sw_head_tryagain_anim", "peeking_talk_up", "nudge_tap", "mascot"]
+    .forEach((k) => out.add("assets/UI/" + k + ".webp"));
+  ["last_swifty_happy", "last_swifty_shabaash", "last_swifty_talk"].forEach((k) => out.add("assets/Images/" + k + ".webp"));
+  out.add("assets/Audio/reference_sfx_burst.wav");
+  return [...out];
+}
 /* Review 1: every correct answer ends on "शाबाश!" with the confetti burst landing on it (reference
    HI02H11: tapped word → शाबाश → short beat → next). The answer word is never repeated after it. */
 function playShabash(cb) {
@@ -569,8 +628,8 @@ function playShabash(cb) {
   play(audioAsset("vo_shabash"), cb);
 }
 function audioAsset(id) {
-  return (CARD.assets && CARD.assets.audio && CARD.assets.audio[id]) ||
-    "assets/Audio/" + id + "." + AUDIO_EXT;
+  return AssetLoader.url((CARD.assets && CARD.assets.audio && CARD.assets.audio[id]) ||
+    "assets/Audio/" + id + "." + AUDIO_EXT);
 }
 /* audioText(slide,key): the exact Hindi line the VO for this slot speaks, so a
    popup can SHOW what it SAYS (shown == spoken). Looks up the build-injected
@@ -1638,8 +1697,8 @@ function evQtypeChip(qtype) {
 
 /* ---------- 12. SLIDE MODULES ---------- */
 function imageAsset(id) {
-  return (CARD.assets && CARD.assets.image && CARD.assets.image[id]) ||
-    "assets/Images/" + id + "." + IMG_EXT;
+  return AssetLoader.url((CARD.assets && CARD.assets.image && CARD.assets.image[id]) ||
+    "assets/Images/" + id + "." + IMG_EXT);
 }
 function picturePuzzle(imageId) {
   const board = document.createElement("div");
@@ -7742,23 +7801,27 @@ function boot() {
   const landSrc =
     (CARD.assets && CARD.assets.audio && CARD.assets.audio["vo_landing"]) ||
     "assets/Audio/vo_landing." + AUDIO_EXT;
-  /* Reference HI02H11 landing: Swiftie speaks first and the play button waits for her. While the
-     greeting plays the button is hidden (.sg-waiting - pointer-events:none, NOT disabled, so a tap falls
-     through and still counts as the gesture that unlocks audio) and the speaker is greyed (.sg-vo-off);
-     the moment she stops, the button pops in (.sg-appear) and pulses. A tap on play while she is still
-     speaking waits for her to finish instead of cutting her off. */
-  let _landingSpeaking = false, _tutorialPending = false, _landReleaseT = 0, _landGen = 0;
-  let _landHeard = false; // true once the greeting has actually sounded (autoplay was allowed)
-  const LAND_RELEASE_MS = 9000; // watchdog: a clip that never ends can never strand the child here
+  /* Reference HI02H11 landing. Swiftie speaks first and the Play button waits for her: it appears only
+     when the greeting has ACTUALLY been heard to its end AND every file of the lesson is downloaded (the
+     loading bar stands where Play will appear). While she speaks the button is hidden (.sg-waiting -
+     pointer-events:none, NOT disabled, so a tap falls through and still counts as a gesture) and the
+     speaker is greyed. If the browser refuses autoplay, nothing is released: the speaker stays live and
+     the child's first tap anywhere starts her. A clip that starts but never reports its end is ended by a
+     watchdog (its own length + 2s); a file that cannot play at all, once a gesture proves it is not an
+     autoplay refusal, counts as done - the child can never be stranded on this screen. */
+  let speaking = false, heard = false, voDone = false, loaded = false, gestured = false, landGen = 0, landWd = 0;
   const setStartBtnReady = (on) => {
-    const b = $("sgBtn"), v = $("sgVo");
-    if (b) {
-      if (on && b.classList.contains("sg-waiting")) b.classList.add("sg-appear");
-      b.classList.toggle("sg-waiting", !on);
-      b.setAttribute("aria-disabled", String(!on));
-    }
+    const b = $("sgBtn");
+    if (!b) return;
+    if (on && b.classList.contains("sg-waiting")) b.classList.add("sg-appear");
+    b.classList.toggle("sg-waiting", !on);
+    b.setAttribute("aria-disabled", String(!on));
+  };
+  const setSpeakerLive = (on) => {
+    const v = $("sgVo");
     if (v) { v.classList.toggle("sg-vo-off", !on); v.setAttribute("aria-disabled", String(!on)); }
   };
+  const refresh = () => { setStartBtnReady(voDone && loaded); setSpeakerLive(!speaking); };
   const replayLandingSwifty = () => { // he waves as he speaks: restart the landing animation
     const im = document.querySelector(".sg-mascot");
     if (!im) return;
@@ -7770,51 +7833,72 @@ function boot() {
     _ac(); // unlock/resume WebAudio on the start gesture so the first clip never clips
     mountSlide(0);
   }
+  const landingOver = () => { speaking = false; clearTimeout(landWd); voDone = true; refresh(); };
   const playLanding = () => {
-    if ($("startGate").classList.contains("hidden") || _landingSpeaking) return;
-    _landingSpeaking = true;
-    setStartBtnReady(false);
+    if ($("startGate").classList.contains("hidden") || speaking) return;
+    speaking = true;
+    refresh();
     replayLandingSwifty();
-    const gen = ++_landGen; // a refused-autoplay attempt's late callback must not release the button
+    const gen = ++landGen; // a superseded attempt's late callback must not count
     play(landSrc, () => {
-      if (gen !== _landGen) return;
-      _landingSpeaking = false;
-      clearTimeout(_landReleaseT);
-      setStartBtnReady(true);
-      if (_tutorialPending) { _tutorialPending = false; enterTutorial(); }
+      if (gen !== landGen) return;
+      if (heard || gestured) landingOver(); // heard to the end - or unplayable even after a gesture
+      else { speaking = false; refresh(); } // autoplay refused: wait for the child's first tap
     });
-    if (currentAudio) currentAudio.addEventListener("playing", () => { _landHeard = true; }, { once: true });
+    const a = currentAudio;
+    if (a) a.addEventListener("playing", () => {
+      if (gen !== landGen) return;
+      heard = true;
+      clearTimeout(landWd);
+      const ms = (isFinite(a.duration) ? a.duration * 1000 : 10000) + 2000;
+      landWd = setTimeout(() => { if (gen === landGen && speaking) landingOver(); }, ms);
+    }, { once: true });
   };
   const sgVo = $("sgVo");
   if (sgVo)
     sgVo.onclick = (e) => {
       e.stopPropagation();
+      gestured = true;
       if (sgVo.classList.contains("sg-vo-off")) return;
       playLanding();
     };
-  setStartBtnReady(false);
-  playLanding(); // best-effort autoplay (works once the tab has any interaction)
   window.addEventListener(
     "pointerdown",
     function once() {
       window.removeEventListener("pointerdown", once);
-      // the first touch is the gesture that lets audio start: (re)start the greeting if autoplay was
-      // refused, and only now arm the watchdog that releases the button if a clip never ends
-      // The greeting already sounded (autoplay allowed): this tap is just a tap - e.g. on play - and
-      // must NOT restart her. Only when autoplay was refused (nothing has sounded yet) start it now.
-      if (_landHeard) return;
-      if (_landingSpeaking && !(currentAudio && !currentAudio.paused)) _landingSpeaking = false;
+      gestured = true;
+      if (heard) return; // she already spoke - this tap is just a tap (e.g. on Play)
+      // autoplay was refused: the attempt is "speaking" but nothing sounds - start her for real now
+      if (speaking && !(currentAudio && !currentAudio.paused)) { landGen++; speaking = false; }
       playLanding();
-      clearTimeout(_landReleaseT);
-      _landReleaseT = setTimeout(() => setStartBtnReady(true), LAND_RELEASE_MS);
     },
     { once: true },
   );
+  // loading bar: fills as files arrive, fades at 100%, and Play may then appear in its place
+  (function () {
+    const bar = $("sgLoad");
+    const fill = bar && bar.querySelector(".sg-load-fill"), txt = bar && bar.querySelector(".sg-load-txt");
+    AssetLoader.onProgress((p) => {
+      if (!bar) return;
+      fill.style.width = p + "%"; txt.textContent = p + "%";
+      bar.setAttribute("aria-valuenow", p);
+    });
+    AssetLoader.ready.then(() => {
+      if (bar) bar.classList.add("done");
+      setTimeout(() => { if (bar) bar.hidden = true; loaded = true; refresh(); }, 320);
+    });
+  })();
+  refresh();
+  // the greeting is fetched first and alone, then she speaks (5s at most) while the rest downloads
+  AssetLoader.start([landSrc], lessonAssetUrls());
+  Promise.race([new Promise((r) => { const t = setInterval(() => { if (AssetLoader.has(landSrc)) { clearInterval(t); r(); } }, 50); }),
+                new Promise((r) => setTimeout(r, 5000))]).then(playLanding);
 
   $("sgBtn").onclick = () => {
+    if ($("sgBtn").classList.contains("sg-waiting")) return;
     if (!_sfxFile("sfx_play")) sfxTap(); // the SwiftPAL play-button sound
     bgmStart(); // the first real gesture is what lets the music start
-    if (_landingSpeaking) { _tutorialPending = true; $("sgBtn").classList.add("sg-pressed"); return; }
+    $("sgBtn").classList.add("sg-pressed");
     enterTutorial();
   };
   // tapping आगे clears any pending nav-nudge

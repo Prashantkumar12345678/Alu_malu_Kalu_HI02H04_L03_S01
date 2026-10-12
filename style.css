@@ -1226,7 +1226,7 @@ body.is-start .stage{background:transparent !important;}
 body.is-start .stage-inner{visibility:hidden;}
 .start-gate{background:transparent;cursor:default;}
 .sg-card{position:absolute;left:110px;top:147px;width:1114px;height:456px;background:#FFFFFF;border:9px solid #FFFFFF;border-radius:43px;}
-.sg-card::before{content:"";position:absolute;inset:0;border-radius:32.5px;background:#55C5F6 url("assets/Images/TITLE%20PAGE.png?v=20261006-160839") center -70px/100% 550px no-repeat;pointer-events:none;}
+.sg-card::before{content:"";position:absolute;inset:0;border-radius:32.5px;background:#55C5F6 url("assets/Images/TITLE%20PAGE.webp?v=20261012") center -70px/100% 550px no-repeat;pointer-events:none;}
 .sg-content{display:none;}
 .sg-mascot{left:-34px;top:255px;bottom:auto;width:208px;height:204px;}
 .sg-vo{left:80px;top:395px;bottom:auto;width:58px;height:58px;}
@@ -1678,3 +1678,16 @@ body.is-start .sg-mascot{transform:none;animation:none;}
    smaller mic's was (71px left of the sentence box, on the box's middle); the box itself does not move */
 .stage.story-reading .reading-mic{left:-110px;margin-top:-38px;width:78px;height:76px;}
 .stage.story-reading .reading-mic svg{width:78px;height:76px;}
+
+/* loading bar (reference HI02H11 .sg-load): centred where the Play button will pop in (button centre 619,347.5) */
+.sg-load{position:absolute;left:469px;top:329.5px;z-index:4;width:300px;height:36px;box-sizing:border-box;border-radius:999px;overflow:hidden;
+  background:#FFF6DA;border:4px solid #FFFFFF;box-shadow:0 5px 0 rgba(11,42,90,.14),0 10px 24px rgba(11,42,90,.16);transition:opacity .3s ease,visibility .3s;}
+.sg-load-fill{position:absolute;left:0;top:0;bottom:0;width:0%;border-radius:999px;overflow:hidden;
+  background:linear-gradient(180deg,#FFD45A 0%,#FCB717 55%,#F2A100 100%);transition:width .25s linear;}
+.sg-load-fill::after{content:"";position:absolute;top:0;bottom:0;left:-40px;right:0;
+  background:repeating-linear-gradient(-45deg,rgba(255,255,255,.30) 0 10px,transparent 10px 20px);animation:sgLoadStripe .9s linear infinite;}
+@keyframes sgLoadStripe{to{transform:translateX(28px);}}
+.sg-load-txt{position:relative;display:block;text-align:center;line-height:28px;font-family:var(--font-hi);font-weight:800;font-size:18px;color:#0B3D8C;}
+.sg-load.done{opacity:0;visibility:hidden;}
+.sg-load[hidden]{display:none;}
+@media (prefers-reduced-motion:reduce){.sg-load-fill::after{animation:none;}}
