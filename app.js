@@ -124,6 +124,7 @@ function setPlaying(on) {
   const c = $("audioChip");
   if (c) c.classList.toggle("playing", on);
   swApplyPose(); // freeze/unfreeze Swiftie's mouth: animate only while a clip is sounding
+  if (typeof bgmUpdate === "function") bgmUpdate(); // the music steps back while a line is spoken
 }
 function stopAudio() {
   if (currentAudio) {
@@ -206,9 +207,55 @@ function _tone(freqs, type, dur, vol) {
     o.stop(t + dur / freqs.length);
   });
 }
-const sfxTap = () => _tone([520], "sine", 0.09, 0.09);
-const sfxCorrect = () => _tone([660, 880, 1180], "sine", 0.42, 0.13); // rising major arpeggio
-const sfxWrongSoft = () => _tone([300, 235], "triangle", 0.2, 0.08); // gentle, never harsh
+/* Recorded SFX from the HI02H11 reference (assets/SFX/*.wav). _sfxFile() plays the file and reports
+   whether it could start one; the old synthesised tone stays as the fallback. The same clip asked for
+   twice within 150ms plays once (two copies at once would play twice as loud). */
+function _sfxFile(name) {
+  const now = Date.now(), last = (window.__sfxLast = window.__sfxLast || {});
+  if (last[name] && now - last[name] < 150) return true;
+  last[name] = now;
+  try {
+    const a = new Audio("assets/SFX/" + name + ".wav");
+    a.volume = 0.7;
+    a.play().catch(() => {});
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+const sfxTap = () => { if (!_sfxFile("sfx_tap")) _tone([520], "sine", 0.09, 0.09); };
+const sfxCorrect = () => { if (!_sfxFile("sfx_correct")) _tone([660, 880, 1180], "sine", 0.42, 0.13); };
+const sfxWrongSoft = () => { if (!_sfxFile("sfx_wrong")) _tone([300, 235], "triangle", 0.2, 0.08); };
+
+/* BACKGROUND MUSIC (reference HI02H11 bgm_mela). A bed, not a feature: it starts on the play tap (the
+   first gesture, so autoplay cannot refuse it), sits at BGM_VOL, ducks to BGM_DUCK whenever a line is
+   spoken (setPlaying calls bgmUpdate), stops for the celebration, and pauses while the tab is hidden. */
+const BGM_VOL = 0.14, BGM_DUCK = 0.02;
+let _bgm = null, _bgmOn = false, _bgmRamp = null;
+function bgmUpdate() {
+  if (!_bgm) return;
+  const to = !_bgmOn ? 0 : isPlaying ? BGM_DUCK : BGM_VOL;
+  if (to > 0 && _bgm.paused && !document.hidden) { const pr = _bgm.play(); if (pr && pr.catch) pr.catch(() => {}); }
+  clearInterval(_bgmRamp);
+  const from = _bgm.volume, t0 = Date.now();
+  _bgmRamp = setInterval(() => {
+    const k = Math.min(1, (Date.now() - t0) / 300);
+    try { _bgm.volume = Math.max(0, Math.min(1, from + (to - from) * k)); } catch (e) {}
+    if (k >= 1) { clearInterval(_bgmRamp); if (to === 0) try { _bgm.pause(); } catch (e) {} }
+  }, 30);
+}
+function bgmStart() {
+  try {
+    if (!_bgm) { _bgm = new Audio("assets/SFX/bgm_mela.wav"); _bgm.loop = true; _bgm.volume = 0; }
+    _bgmOn = true;
+    bgmUpdate();
+  } catch (e) {}
+}
+function bgmStop() { _bgmOn = false; bgmUpdate(); }
+document.addEventListener("visibilitychange", () => {
+  if (!_bgm) return;
+  if (document.hidden) { try { _bgm.pause(); } catch (e) {} } else bgmUpdate();
+});
 /* a pitch glide (whoosh) — used by the picture puzzle's open / close / reveal */
 function _sweep(f0, f1, dur, vol, type) {
   const c = _ac();
@@ -360,6 +407,30 @@ function setSwMood(m) {
   swApplyPose();
   const w = document.getElementById("swBuddy");
   if (w) w.dataset.expr = SW_POSE[m] || "talking";
+  // the play-once celebrate face restarts on EVERY correct answer (same src would not replay it)
+  const img = document.getElementById("swBuddyImg");
+  if (img && SW_POSE[m] === "celebrate" && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    const src = img.getAttribute("src");
+    img.removeAttribute("src"); void img.offsetWidth; img.src = src;
+  }
+  /* reference HI02H11 [H11-217]: the sad face lasts exactly as long as the wrong-answer feedback - once no
+     voice/hint has been playing for 0.4s (and at least 0.8s has passed) Swiftie goes back to his resting
+     face. Anything that changes his mood meanwhile (a hint, the cheer) wins. 12s at most. */
+  clearInterval(setSwMood._sadT);
+  if (m === "tryagain") {
+    const t0 = Date.now();
+    let quietSince = 0;
+    setSwMood._sadT = setInterval(() => {
+      if (swMood !== "tryagain") { clearInterval(setSwMood._sadT); return; }
+      const busy = isPlaying || state.hintActive;
+      if (busy) quietSince = 0;
+      else if (!quietSince) quietSince = Date.now();
+      if ((!busy && quietSince && Date.now() - quietSince >= 400 && Date.now() - t0 >= 800) || Date.now() - t0 > 12000) {
+        clearInterval(setSwMood._sadT);
+        setSwMood("point");
+      }
+    }, 100);
+  }
 }
 /* Correct-answer paper confetti copied from the HI02H11 reference toolkit. */
 function confettiCannon() {
@@ -865,14 +936,16 @@ function mountTapOptions({
     return o && o.audio ? audioAsset(o.audio) : null;
   };
   // each card in screen order: glow, say its own word, a short breath, the next
-  function _sayEach(cells, onEach, done) {
+  // glow:true = the hint-2 walk (the card pulses with a ring while it speaks); the opening reveal
+  // passes false - each option just fades in on its own word, with no extra border
+  function _sayEach(cells, onEach, done, glow = true) {
     let k = 0;
     const next = () => {
       if (!isCurrent()) return;
       if (k >= cells.length) { done(); return; }
       const c = cells[k++];
       onEach(c);
-      c.classList.add("qp-saying");
+      if (glow) c.classList.add("qp-saying");
       play(_optAudio(c), () => {
         c.classList.remove("qp-saying");
         setTimeout(next, 180);
@@ -906,7 +979,7 @@ function mountTapOptions({
     };
     play(audioFor(slide, "question") || audioFor(slide, "prompt") || null, () => {
       if (!isCurrent()) return;
-      _sayEach(cells, (c) => c.classList.remove("opt-seq-hidden"), open);
+      _sayEach(cells, (c) => c.classList.remove("opt-seq-hidden"), open, false);
     });
     setTimeout(() => { if (isCurrent()) open(); }, 20000); // safety net: never a dead question
   }
@@ -943,7 +1016,7 @@ function mountTapOptions({
         setSwMood("happy");
         playShabash(() => { if (isCurrent()) (onAnswer || finishAnswer)(slide, false); });
       };
-      if (slide.phase === "guided" || (slide.data && slide.data.reveal_hand)) pointNudgeAt(el);   /* [puzzle-5] */
+      pointNudgeAt(el);   // reference HI02H11: terminal help puts the hand on the answer in every phase
     }
     SwiftPAL.emit("answer_revealed", {
       slide_id: slide.id,
@@ -2158,6 +2231,8 @@ function finishAnswer(slide, success) {
   }
   setTimeout(() => { if (CARD.slides[state.idx] === slide) completeSlide(success); }, delay);
 }
+// mic glyph from assets/UI/audio_button.svg (128px PNG, used as an alpha mask -> white mic)
+const READING_MIC_PNG = "data:image/png;base64,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";
 function mountReadingPractice(host, slide) {
   const wrap = document.createElement("div");
   wrap.className = "ev-read story-read-layout read-with-mic";
@@ -2177,7 +2252,9 @@ function mountReadingPractice(host, slide) {
   mic.className = "reading-mic";
   mic.type = "button";
   mic.setAttribute("aria-label", "वाक्य पढ़ने के लिए माइक्रोफ़ोन");
-  mic.innerHTML = '<svg viewBox="0 0 62 60" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Audio"><g filter="url(#readingChipShadow)"><circle cx="31" cy="26" r="23" fill="url(#readingChipGrad)"/><circle cx="31" cy="26" r="25" stroke="white" stroke-width="4"/><rect class="mic" x="26.75" y="15.05" width="8.5" height="15.85" rx="4.25" fill="white"/><path class="mic" d="M24.5 26V26.7A6.5 6.5 0 0 0 37.5 26.7V26M31 33.2V36.1M27.7 36.8H34.3" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><g class="mic-wave" fill="white"><rect x="22.9" y="22" width="2.2" height="8" rx="1.1"/><rect x="26.4" y="19" width="2.2" height="14" rx="1.1"/><rect x="29.9" y="17" width="2.2" height="18" rx="1.1"/><rect x="33.4" y="19" width="2.2" height="14" rx="1.1"/><rect x="36.9" y="22" width="2.2" height="8" rx="1.1"/></g></g><defs><filter id="readingChipShadow" x="0" y="0" width="62" height="60" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/><feOffset dy="4"/><feGaussianBlur stdDeviation="2"/><feComposite in2="hardAlpha" operator="out"/><feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"/><feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow"/><feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape"/></filter><linearGradient id="readingChipGrad" x1="8" y1="26" x2="54" y2="26" gradientUnits="userSpaceOnUse"><stop stop-color="#1987FC"/><stop offset="1" stop-color="#1565F4"/></linearGradient></defs></svg>';
+  // Mic art = assets/UI/audio_button.svg (58x60), inlined. While the child reads, the art fades out (.mic) and the same
+  // blue pill with live voice bars fades in (.mic-wave) - the existing p2-rec CSS drives both.
+  mic.innerHTML = '<svg viewBox="0 0 58 60" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="माइक"><g class="mic"><rect x="8" y="4" width="41.1559" height="44" rx="20.578" fill="url(#readingPillGrad)"/><rect x="6" y="2" width="45.1559" height="48" rx="22.578" stroke="white" stroke-width="4"/><g mask="url(#readingMicMask)"><rect x="17.9111" y="15.3335" width="21.434" height="21.434" fill="white"/></g></g><g class="mic-wave"><rect x="8" y="4" width="41.1559" height="44" rx="20.578" fill="url(#readingPillGrad)"/><rect x="6" y="2" width="45.1559" height="48" rx="22.578" stroke="white" stroke-width="4"/><g fill="white" transform="translate(-2.42 0)"><rect x="22.9" y="22" width="2.2" height="8" rx="1.1"/><rect x="26.4" y="19" width="2.2" height="14" rx="1.1"/><rect x="29.9" y="17" width="2.2" height="18" rx="1.1"/><rect x="33.4" y="19" width="2.2" height="14" rx="1.1"/><rect x="36.9" y="22" width="2.2" height="8" rx="1.1"/></g></g><defs><linearGradient id="readingPillGrad" x1="8" y1="26" x2="49.1559" y2="26" gradientUnits="userSpaceOnUse"><stop stop-color="#1987FC"/><stop offset="1" stop-color="#1565F4"/></linearGradient><mask id="readingMicMask" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="20" y="18" width="17" height="16"><image href="' + READING_MIC_PNG + '" x="20.5781" y="18" width="16" height="16" preserveAspectRatio="none"/></mask></defs></svg>';
   card.querySelector(".ev-text").appendChild(mic);
   // Sentence bar: every story page uses the same type size as page T2 (27.3px); a sentence too long for one
   // line wraps to two lines at that same size instead of shrinking.
@@ -2223,6 +2300,7 @@ function mountReadingPractice(host, slide) {
   mic.onclick=()=>{
     if(!current() || mic.disabled || mode!=="ready")return;
     stopAudio();stopNudge();stopWords();
+    sfxTap(); // the button-press sound (reference sfx_tap) so the child hears the mic take the tap
     mode="reading";
     setNavActive(false);
     mic.classList.add("p2-rec");
@@ -5312,6 +5390,7 @@ const SlideModules = {
       $("stage").classList.add("blurred", "gating");
       phaseGate.setAttribute("aria-hidden", "false");
       phaseGate.classList.add("show");
+      _sfxFile("sfx_whoosh"); // the screen changes - a soft swish, well before Swiftie speaks
       phaseGateImg.removeAttribute("src");
       void phaseGateImg.offsetWidth;
       phaseGateImg.src = "assets/UI/peeking_talk_up.webp?run=" + openedAt;
@@ -5383,6 +5462,7 @@ const SlideModules = {
   CELEBRATION: {
     mount(host, slide) {
       state.ownsAudio = true;
+      bgmStop(); // the celebration has its own jingle and its own line
       const es = $("endScreen");
       $("endTitle").textContent = "";
       es.classList.add("show", "hint-glow");
@@ -7662,34 +7742,86 @@ function boot() {
   const landSrc =
     (CARD.assets && CARD.assets.audio && CARD.assets.audio["vo_landing"]) ||
     "assets/Audio/vo_landing." + AUDIO_EXT;
+  /* Reference HI02H11 landing: Swiftie speaks first and the play button waits for her. While the
+     greeting plays the button is hidden (.sg-waiting - pointer-events:none, NOT disabled, so a tap falls
+     through and still counts as the gesture that unlocks audio) and the speaker is greyed (.sg-vo-off);
+     the moment she stops, the button pops in (.sg-appear) and pulses. A tap on play while she is still
+     speaking waits for her to finish instead of cutting her off. */
+  let _landingSpeaking = false, _tutorialPending = false, _landReleaseT = 0, _landGen = 0;
+  let _landHeard = false; // true once the greeting has actually sounded (autoplay was allowed)
+  const LAND_RELEASE_MS = 9000; // watchdog: a clip that never ends can never strand the child here
+  const setStartBtnReady = (on) => {
+    const b = $("sgBtn"), v = $("sgVo");
+    if (b) {
+      if (on && b.classList.contains("sg-waiting")) b.classList.add("sg-appear");
+      b.classList.toggle("sg-waiting", !on);
+      b.setAttribute("aria-disabled", String(!on));
+    }
+    if (v) { v.classList.toggle("sg-vo-off", !on); v.setAttribute("aria-disabled", String(!on)); }
+  };
+  const replayLandingSwifty = () => { // he waves as he speaks: restart the landing animation
+    const im = document.querySelector(".sg-mascot");
+    if (!im) return;
+    const src = im.getAttribute("src");
+    im.removeAttribute("src"); void im.offsetWidth; im.src = src;
+  };
+  function enterTutorial() {
+    stopAudio(); // safe: the greeting is not sounding any more
+    _ac(); // unlock/resume WebAudio on the start gesture so the first clip never clips
+    mountSlide(0);
+  }
   const playLanding = () => {
-    if (!$("startGate").classList.contains("hidden")) play(landSrc, () => {});
+    if ($("startGate").classList.contains("hidden") || _landingSpeaking) return;
+    _landingSpeaking = true;
+    setStartBtnReady(false);
+    replayLandingSwifty();
+    const gen = ++_landGen; // a refused-autoplay attempt's late callback must not release the button
+    play(landSrc, () => {
+      if (gen !== _landGen) return;
+      _landingSpeaking = false;
+      clearTimeout(_landReleaseT);
+      setStartBtnReady(true);
+      if (_tutorialPending) { _tutorialPending = false; enterTutorial(); }
+    });
+    if (currentAudio) currentAudio.addEventListener("playing", () => { _landHeard = true; }, { once: true });
   };
   const sgVo = $("sgVo");
   if (sgVo)
     sgVo.onclick = (e) => {
       e.stopPropagation();
+      if (sgVo.classList.contains("sg-vo-off")) return;
       playLanding();
     };
+  setStartBtnReady(false);
   playLanding(); // best-effort autoplay (works once the tab has any interaction)
   window.addEventListener(
     "pointerdown",
     function once() {
       window.removeEventListener("pointerdown", once);
+      // the first touch is the gesture that lets audio start: (re)start the greeting if autoplay was
+      // refused, and only now arm the watchdog that releases the button if a clip never ends
+      // The greeting already sounded (autoplay allowed): this tap is just a tap - e.g. on play - and
+      // must NOT restart her. Only when autoplay was refused (nothing has sounded yet) start it now.
+      if (_landHeard) return;
+      if (_landingSpeaking && !(currentAudio && !currentAudio.paused)) _landingSpeaking = false;
       playLanding();
+      clearTimeout(_landReleaseT);
+      _landReleaseT = setTimeout(() => setStartBtnReady(true), LAND_RELEASE_MS);
     },
     { once: true },
   );
 
   $("sgBtn").onclick = () => {
-    stopAudio(); // silence the landing greeting BEFORE slide 0 speaks (no VO overlap)
-    _ac(); // unlock/resume WebAudio on the start gesture so the first clip never clips
-    mountSlide(0);
+    if (!_sfxFile("sfx_play")) sfxTap(); // the SwiftPAL play-button sound
+    bgmStart(); // the first real gesture is what lets the music start
+    if (_landingSpeaking) { _tutorialPending = true; $("sgBtn").classList.add("sg-pressed"); return; }
+    enterTutorial();
   };
   // tapping आगे clears any pending nav-nudge
   $("navBtn").addEventListener("click", () => {
     clearTimeout(state.navNudgeTimer);
     stopNudge();
+    if (!$("navBtn").disabled && !_sfxFile("sfx_next")) sfxTap(); // the SwiftPAL next-button sound
   });
   // when the web font finishes loading, re-centre glyphs (metrics change vs fallback)
   if (document.fonts && document.fonts.ready) {

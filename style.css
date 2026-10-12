@@ -1600,7 +1600,7 @@ body.is-start .sg-mascot{transform:none;animation:none;}
 .qp-surface .qp-cards,.qp-surface .qp-board{display:block !important;}
 .qp-surface .qp-tile,.qp-surface .qp-slot{position:absolute;}
 /* hint 2: the card whose word is being said */
-.opt-cell.qp-saying{animation:qpSaying .55s ease-in-out infinite alternate;outline:4px solid #1E96F0;outline-offset:3px;}
+.opt-cell.qp-saying{animation:qpSaying .55s ease-in-out infinite alternate;}   /* the option being spoken gently swells - no extra border ring, anywhere */
 @keyframes qpSaying{from{transform:scale(1);}to{transform:scale(1.06);}}
 /* fill the blanks */
 .fb-wrap{display:flex;flex-direction:column;align-items:center;gap:26px;width:100%;}
@@ -1649,3 +1649,32 @@ body.is-start .sg-mascot{transform:none;animation:none;}
 .qp-big .qp-options .opt-cell,.stage.thm-toybox .qp-big .qp-options .opt-cell{min-height:76px;padding:8px 8px;}
 .qp-big .qp-options .ev-opt-lbl{font-size:28px;}
 .qp-big .qp-options .ev-opt-img{height:70px;}
+
+/* story mic = audio_button.svg art; its blue pill inside .mic-wave must stay still - only the voice bars move */
+.reading-mic svg .mic-wave > rect{animation:none !important;}
+
+/* ===== Reference HI02H11 port: landing, hint, responsiveness ===== */
+/* landing: the play button waits (hidden) while Swiftie greets, then pops in and pulses; the speaker is greyed meanwhile */
+.sg-btn.sg-waiting{visibility:hidden !important;opacity:0 !important;pointer-events:none !important;animation:none !important;}
+.sg-btn.sg-appear:not(.sg-waiting):not(.sg-pressed){animation:sgBtnAppear .45s cubic-bezier(.34,1.56,.64,1) both,sgBtnPulse 1.4s ease-in-out .45s infinite !important;}
+.sg-btn.sg-pressed{animation:none !important;}
+@keyframes sgBtnAppear{from{opacity:0;transform:translateX(-50%) scale(.3);}to{opacity:1;transform:translateX(-50%) scale(1);}}
+.sg-vo.sg-vo-off{pointer-events:none !important;opacity:.5 !important;filter:grayscale(1) brightness(1.2) !important;}
+/* hint: as in the reference there is no manual hint button - help arrives on its own through the
+   wrong-answer ladder (word -> the question again with the options glowing -> the answer pulses under the hand) */
+.hint-btn{display:none !important;}
+/* responsiveness (reference [H11-181]/[H11-205]): the transition Swiftie and headline scale with the window,
+   with no 360px floor, so a phone never loses them off-screen */
+.phase-gate{--pgf:min(96px,12.8vh,13vw);}
+.phase-gate img{height:min(52.8vh,624px,92vw) !important;width:min(52.8vh,624px,92vw) !important;}
+.pg-title{top:max(8px,min(271px,calc(58.8vh - 1.2 * var(--pgf) - 12px))) !important;font-size:var(--pgf) !important;-webkit-text-stroke:calc(var(--pgf) * .104) #FFFFFF !important;max-width:94vw;white-space:nowrap;}
+@supports (height:1svh){
+  .phase-gate{--pgf:min(96px,12.8svh,13vw);}
+  .phase-gate img{height:min(52.8svh,624px,92vw) !important;width:min(52.8svh,624px,92vw) !important;}
+  .pg-title{top:max(8px,min(271px,calc(58.8svh - 1.2 * var(--pgf) - 12px))) !important;}
+}
+@media (prefers-reduced-motion:reduce){.sg-btn.sg-appear{animation:none !important;}}
+/* story pages: the mic a little bigger (66x64 -> 78x76) on the SAME spot - its centre stays where the
+   smaller mic's was (71px left of the sentence box, on the box's middle); the box itself does not move */
+.stage.story-reading .reading-mic{left:-110px;margin-top:-38px;width:78px;height:76px;}
+.stage.story-reading .reading-mic svg{width:78px;height:76px;}
