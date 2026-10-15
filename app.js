@@ -8039,7 +8039,8 @@ function boot() {
     const v = $("sgVo");
     if (v) { v.classList.toggle("sg-vo-off", !on); v.setAttribute("aria-disabled", String(!on)); }
   };
-  const refresh = () => { setStartBtnReady(voDone && loaded); setSpeakerLive(!speaking); };
+  // reference [H11-202]: Play follows the greeting alone - files keep preloading in the background (no bar)
+  const refresh = () => { setStartBtnReady(voDone); setSpeakerLive(!speaking); };
   const replayLandingSwifty = () => { // he waves as he speaks: restart the landing animation
     const im = document.querySelector(".sg-mascot");
     if (!im) return;

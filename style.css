@@ -1781,3 +1781,5 @@ body.vo-spk .audio-chip{pointer-events:none !important;opacity:.5 !important;fil
    brightens a touch */
 .qp-tile.selected{outline:none !important;filter:drop-shadow(0 10px 12px rgba(11,61,140,.30));}
 .qp-slot.hover{outline:none !important;}
+/* no visible loading bar on the title screen - the lesson still preloads in the background */
+.sg-load{display:none !important;}
