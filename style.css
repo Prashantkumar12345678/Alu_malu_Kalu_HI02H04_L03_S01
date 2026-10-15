@@ -1759,3 +1759,6 @@ body.is-start .sg-mascot{transform:none;animation:none;}
 .ev-qa.image-above-options .opt-cell .ev-opt-lbl,.ev-qa.image-above-options .opt-cell.text-only .ev-opt-lbl,
 .qp-big .qp-options .ev-opt-lbl,.qp-options .ev-opt-lbl,
 .qp-big .qp-options .fb-opts .ev-opt-lbl,.qp-options .fb-opts .ev-opt-lbl,.qp-big.stack .qp-options .ev-opt-lbl{font-size:32px;}
+/* answer-card karaoke: the word being spoken turns the story pages' orange */
+.opt-cell .ev-opt-lbl .ev-word{transition:color .15s ease;}
+.opt-cell .ev-opt-lbl .ev-word.ev-word-now{color:#FF8A00;}

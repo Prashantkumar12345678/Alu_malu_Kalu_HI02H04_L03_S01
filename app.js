@@ -1105,10 +1105,13 @@ function mountTapOptions({
       const c = cells[k++];
       onEach(c);
       if (glow) c.classList.add("qp-saying", "opt-walk");
+      let stopKaraoke = () => {};
       play(_optAudio(c), () => {
+        stopKaraoke();
         c.classList.remove("qp-saying", "opt-walk");
         setTimeout(next, 180);
       });
+      if (glow) stopKaraoke = optWordKaraoke(c); // the card's words light up as they are spoken
     };
     next();
   }
@@ -1736,6 +1739,25 @@ function evPassage(p, opts) {
   card._lines = lines;
   return card;
 }
+/* KARAOKE ON AN ANSWER CARD - while a card says its own word(s), each word lights up in the story pages'
+   orange as it is spoken (evWordKaraoke follows the playing clip). The label is split into .ev-word spans
+   once; returns the stop function. */
+function optWordKaraoke(cell) {
+  const lbl = cell && cell.querySelector(".ev-opt-lbl");
+  if (!lbl) return () => {};
+  if (!lbl.querySelector(".ev-word")) {
+    const words = (lbl.textContent || "").trim().split(/\s+/).filter(Boolean);
+    lbl.textContent = "";
+    words.forEach((w, i) => {
+      if (i) lbl.appendChild(document.createTextNode(" "));
+      const sp = document.createElement("span");
+      sp.className = "ev-word";
+      sp.textContent = w;
+      lbl.appendChild(sp);
+    });
+  }
+  return evWordKaraoke(lbl);
+}
 function evWordKaraoke(line, readingDuration, from = 0, to) {
   const words = [...line.querySelectorAll(".ev-word")].slice(from, to);
   if (!words.length) return () => {};
@@ -1891,7 +1913,9 @@ function mountFillBlanks(q, host, onDone, isCurrent) {
     const say = (n) => {
       if (n >= n0.length || !isCurrent()) { then(); return; }
       n0[n].classList.add("qp-saying");
-      play(wordAudio(n0[n].dataset.word), () => { n0[n].classList.remove("qp-saying"); setTimeout(() => say(n + 1), 150); });
+      let stopK = () => {};
+      play(wordAudio(n0[n].dataset.word), () => { stopK(); n0[n].classList.remove("qp-saying"); setTimeout(() => say(n + 1), 150); });
+      stopK = optWordKaraoke(n0[n]);
     };
     say(0);
   };
