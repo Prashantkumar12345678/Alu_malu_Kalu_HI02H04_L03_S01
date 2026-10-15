@@ -1676,8 +1676,8 @@ body.is-start .sg-mascot{transform:none;animation:none;}
 @media (prefers-reduced-motion:reduce){.sg-btn.sg-appear{animation:none !important;}}
 /* story pages: the mic a little bigger (66x64 -> 78x76) on the SAME spot - its centre stays where the
    smaller mic's was (71px left of the sentence box, on the box's middle); the box itself does not move */
-.stage.story-reading .reading-mic{left:-110px;margin-top:-38px;width:78px;height:76px;}
-.stage.story-reading .reading-mic svg{width:78px;height:76px;}
+.stage.story-reading .reading-mic{left:-115px;margin-top:-43px;width:88px;height:86px;}   /* bigger again (78 -> 88), same centre */
+.stage.story-reading .reading-mic svg{width:88px;height:86px;}
 
 /* loading bar (reference HI02H11 .sg-load): centred where the Play button will pop in (button centre 619,347.5) */
 .sg-load{position:absolute;left:469px;top:329.5px;z-index:4;width:300px;height:36px;box-sizing:border-box;border-radius:999px;overflow:hidden;
@@ -1696,3 +1696,66 @@ body.is-start .sg-mascot{transform:none;animation:none;}
 .boot-loader{position:fixed;inset:0;z-index:9999;background:#FFFFFF;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;}
 .boot-loader img{width:118px;height:118px;object-fit:contain;}
 .boot-loader.done{opacity:0;pointer-events:none;transition:opacity .4s ease;}
+/* puzzle questions: the words inside an answer button had almost no gap, and a label that wraps sat its
+   two lines on top of each other - give both room (spacing only, sizes unchanged) */
+.qp-big .qp-options .ev-opt-lbl{word-spacing:.22em;line-height:1.45;}
+/* open puzzle question: the white question box a little LONGER only (side padding 24 -> 48px);
+   height, text size and position unchanged */
+.qp-big .qp-qcard,.qp-big.stack .qp-qcard{padding-left:48px;padding-right:48px;}
+/* open puzzle question: the QUESTION must not look like an answer - it is a dark-blue box (soft 14px corners, not a pill - a pill read as a button) with white
+   text, while the answer buttons stay white cards */
+.qp-big .qp-qcard,.qp-big.stack .qp-qcard{background:#0B3D8C;border-radius:14px;box-shadow:none;}   /* no shadow under the question */
+.qp-big .qp-question-text,.qp-big.ink-dark .qp-question-text{color:#FFFFFF;text-shadow:none;}
+/* Q1 (मालू पहचानो) hints: no extra border/glow ring on the picture boxes - the box being spoken (hint 2)
+   and the answer (hint 3) just gently pulse, same as the answer buttons elsewhere */
+.identify-boxes .tis-hot.identify-glow{box-shadow:0 2px 10px rgba(11,42,90,.15);animation:qpSaying .55s ease-in-out infinite alternate;}
+.identify-boxes .tis-hot.reveal-hold{box-shadow:0 2px 10px rgba(11,42,90,.15);animation:qpSaying .55s ease-in-out infinite alternate;}
+@media (prefers-reduced-motion:reduce){.identify-boxes .tis-hot.identify-glow,.identify-boxes .tis-hot.reveal-hold{animation:none;}}
+/* hint 2 (reference .opt-walk): the card being named swells to 1.07 every 0.5s while its word is spoken -
+   NO blue ring (asked: no border when an option pulses, anywhere); it keeps its normal card shadow */
+.opt-cell.opt-walk,.stage.thm-toybox .opt-cell.opt-walk,.ev-qa.image-above-options .opt-cell.opt-walk,.qp-options .opt-cell.opt-walk,.qp-big .qp-options .opt-cell.opt-walk,.stage.thm-toybox .qp-big .qp-options .opt-cell.opt-walk{animation:optWalk .5s ease-in-out infinite alternate;box-shadow:0 10px 22px rgba(214,140,20,.18) !important;}
+@keyframes optWalk{from{transform:scale(1);}to{transform:scale(1.07);}}
+@media (prefers-reduced-motion:reduce){.opt-cell.opt-walk{animation:none;}}
+
+/* ===== Reference HI02H11 card borders =====
+   ANSWER CARDS (guided questions, puzzle questions, fill-in words): cream face, thin warm-beige border,
+   28px corners, soft warm shadow - exactly the reference's .opt-cell */
+.ev-qa.image-above-options .opt-cell,.stage.thm-toybox .ev-qa.image-above-options .opt-cell,
+.qp-options .opt-cell,.stage.thm-toybox .qp-options .opt-cell,
+.qp-big .qp-options .opt-cell,.stage.thm-toybox .qp-big .qp-options .opt-cell{
+  border:2px solid #DCD5C6;border-radius:28px;background:#FFFDF7;box-shadow:0 10px 22px rgba(214,140,20,.18);outline:none;}
+.qp-big .qp-options .opt-cell:not(.correct){outline:none;}
+.qp-options .opt-cell:hover,.qp-big .qp-options .opt-cell:hover{box-shadow:0 12px 24px rgba(214,140,20,.22);}
+.qp-options .opt-cell:active,.qp-big .qp-options .opt-cell:active{box-shadow:0 6px 14px rgba(214,140,20,.18);}
+.ev-qa.image-above-options .opt-cell.correct,.qp-options .opt-cell.correct,.qp-big .qp-options .opt-cell.correct,
+.stage.thm-toybox .qp-big .qp-options .opt-cell.correct{border-color:var(--correct);box-shadow:0 10px 22px rgba(0,177,50,.18);}
+.ev-qa.image-above-options .opt-cell.faded,.qp-options .opt-cell.faded,.qp-big .qp-options .opt-cell.faded{box-shadow:none;}
+/* QUESTION BOX in an open puzzle piece: kept as chosen - dark-blue box, white text, 14px corners, no
+   border, no shadow (the reference card style is NOT applied here) */
+.qp-big .qp-qcard,.qp-big.stack .qp-qcard{background:#0B3D8C;border:0;border-radius:14px;box-shadow:none;}
+.qp-big .qp-question-text,.qp-big.ink-dark .qp-question-text{color:#FFFFFF;text-shadow:none;}
+/* QUESTION PICTURES (reference HI02H11 .story-q-thumb): no border or outline - just 14px corners and a soft
+   shadow. Applies to the guided question pictures and the Q1 (मालू पहचानो) scene. */
+.ev-qa.image-above-options .ev-passage{outline:none;border:0;border-radius:14px;box-shadow:0 3px 10px rgba(11,42,90,.18);}
+.ev-qa.image-above-options .ev-pic{border-radius:14px;}
+.stage.question-layout .tis-frame{border:0;border-radius:14px;box-shadow:0 3px 10px rgba(11,42,90,.18);}
+
+/* STORY PAGES - reference HI02H11 border & text-box look. Shape (corner radius), size and position are
+   untouched: every box here is border-box with a fixed frame, so only colours/shadows change.
+   outer card: reference light-blue rim + soft shadow (rim width kept at 12px) */
+.read-with-mic .ev-passage.big{border-color:#50AAF2;box-shadow:0 6px 18px rgba(11,61,140,.10);}
+/* picture: thin white border, pale-blue backing, soft shadow (was a thick yellow border) */
+.read-with-mic .ev-passage.big .story-frame{border:2px solid #FFFFFF;background:#DCEEFB;box-shadow:0 6px 18px rgba(11,42,90,.12);}
+/* sentence box: white box with a white rim and the reference's two-layer soft shadow, navy text
+   (was a thick blue border; rim width kept at 4px so the box height does not move) */
+.read-with-mic .ev-passage.big .story-caption{border-color:#FFFFFF;box-shadow:0 5px 0 rgba(11,42,90,.10),0 10px 26px rgba(11,42,90,.12);color:#0B3D8C;}
+.read-with-mic .ev-passage.big .story-caption .ev-line{color:#0B3D8C;}
+/* OPTION TEXT SIZE (reference HI02H11): word-only answers 44px/800, answers with a picture 34px/800, navy.
+   Long sentence answers inside a puzzle piece use the picture size (34px) so they stay inside the piece. */
+.ev-qa.image-above-options .opt-cell.text-only .ev-opt-lbl{font-size:44px;font-weight:800;line-height:1.15;color:#0B3D8C;}
+.qp-big .qp-options .ev-opt-lbl{font-size:34px;font-weight:800;color:#0B3D8C;}
+.qp-big .qp-options .fb-opts .ev-opt-lbl,.qp-options .fb-opts .ev-opt-lbl{font-size:44px;font-weight:800;}
+/* ALL answer options: 32px text (guided word options, puzzle options, fill-in words) */
+.ev-qa.image-above-options .opt-cell .ev-opt-lbl,.ev-qa.image-above-options .opt-cell.text-only .ev-opt-lbl,
+.qp-big .qp-options .ev-opt-lbl,.qp-options .ev-opt-lbl,
+.qp-big .qp-options .fb-opts .ev-opt-lbl,.qp-options .fb-opts .ev-opt-lbl,.qp-big.stack .qp-options .ev-opt-lbl{font-size:32px;}

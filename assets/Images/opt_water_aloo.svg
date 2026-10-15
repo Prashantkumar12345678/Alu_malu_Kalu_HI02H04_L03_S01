@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="30 145 480 290" width="480" height="290">
+  <!-- "पानी के अंदर" option: a cross-section of water with potatoes inside it,
+       drawn to match opt_mitti (thick dark outline, rounded block, bumpy top surface) -->
+  <defs>
+    <linearGradient id="waterFill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7FD3F7"/>
+      <stop offset="1" stop-color="#2F8FD8"/>
+    </linearGradient>
+    <linearGradient id="waterTop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#B9EBFF"/>
+      <stop offset="1" stop-color="#7FD3F7"/>
+    </linearGradient>
+    <clipPath id="tank">
+      <path d="M48 196 Q78 160 112 190 Q146 160 180 190 Q214 160 248 190 Q282 160 316 190 Q350 160 384 190 Q418 160 452 190 Q480 162 496 196 L496 382 Q496 418 460 418 L84 418 Q48 418 48 382 Z"/>
+    </clipPath>
+  </defs>
+
+  <!-- water body -->
+  <path d="M48 196 Q78 160 112 190 Q146 160 180 190 Q214 160 248 190 Q282 160 316 190 Q350 160 384 190 Q418 160 452 190 Q480 162 496 196 L496 382 Q496 418 460 418 L84 418 Q48 418 48 382 Z"
+        fill="url(#waterFill)" stroke="#1F4E79" stroke-width="10" stroke-linejoin="round"/>
+  <!-- lighter surface band -->
+  <g clip-path="url(#tank)">
+    <path d="M40 196 Q78 160 112 190 Q146 160 180 190 Q214 160 248 190 Q282 160 316 190 Q350 160 384 190 Q418 160 452 190 Q480 162 504 196 L504 236 Q470 250 430 236 Q390 222 350 236 Q310 250 270 236 Q230 222 190 236 Q150 250 110 236 Q70 222 40 236 Z"
+          fill="url(#waterTop)" opacity=".9"/>
+    <!-- ripple lines -->
+    <g fill="none" stroke="#E6F8FF" stroke-width="7" stroke-linecap="round" opacity=".85">
+      <path d="M92 268 q22 -10 44 0"/>
+      <path d="M380 262 q22 -10 44 0"/>
+      <path d="M250 300 q20 -9 40 0"/>
+      <path d="M120 372 q22 -10 44 0"/>
+      <path d="M400 384 q18 -8 36 0"/>
+    </g>
+  </g>
+
+  <!-- potatoes under the water -->
+  <g stroke="#4A2E1A" stroke-width="8" stroke-linejoin="round">
+    <path d="M118 318 C110 288 150 272 180 284 C212 296 214 336 186 350 C158 364 124 350 118 318 Z" fill="#C98B4E"/>
+    <path d="M232 352 C228 322 270 306 306 318 C340 330 340 372 306 384 C272 396 236 382 232 352 Z" fill="#C98B4E"/>
+    <path d="M370 300 C368 278 398 266 422 276 C446 286 444 318 422 328 C398 338 372 324 370 300 Z" fill="#C98B4E"/>
+  </g>
+  <!-- potato eyes / shine -->
+  <g fill="#8A5A2E">
+    <circle cx="150" cy="304" r="4.5"/><circle cx="176" cy="326" r="4"/><circle cx="160" cy="336" r="3.5"/>
+    <circle cx="268" cy="340" r="4.5"/><circle cx="296" cy="360" r="4"/><circle cx="258" cy="366" r="3.5"/>
+    <circle cx="398" cy="290" r="4"/><circle cx="414" cy="312" r="3.5"/>
+  </g>
+  <g fill="none" stroke="#E7B27A" stroke-width="6" stroke-linecap="round">
+    <path d="M136 298 q10 -10 24 -10"/><path d="M252 334 q12 -10 28 -10"/><path d="M384 286 q8 -8 20 -8"/>
+  </g>
+
+  <!-- bubbles rising -->
+  <g fill="#E6F8FF" stroke="#1F4E79" stroke-width="4">
+    <circle cx="206" cy="262" r="9"/><circle cx="222" cy="232" r="6"/>
+    <circle cx="344" cy="272" r="8"/><circle cx="356" cy="246" r="5"/>
+    <circle cx="452" cy="352" r="7"/>
+  </g>
+</svg>

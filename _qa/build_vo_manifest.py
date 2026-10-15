@@ -41,6 +41,8 @@ def slide(sl):
             add(au.get(k))
     for o in d.get("options", []):
         add(o.get("audio"), True)
+    if d.get("hint1_vo"):   # the 1st miss speaks the hint-1 line on this slide
+        add(au.get("try_again"))
     if d.get("options"):
         add(au.get("reveal") if d.get("walk_hint") or d.get("kind") == "fill_blanks" else None)
         if not d.get("walk_hint") and d.get("kind") != "fill_blanks":

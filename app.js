@@ -187,9 +187,18 @@ function setPlaying(on) {
   swApplyPose(); // freeze/unfreeze Swiftie's mouth: animate only while a clip is sounding
   if (typeof bgmUpdate === "function") bgmUpdate(); // the music steps back while a line is spoken
 }
+/* [ported from reference HI02H11 stopAudio/play] stopAudio() hard-stops the current clip AND bumps the
+   playback generation, so any in-flight callback of an earlier clip (its onended, its error/blocked
+   fallback timer) becomes a no-op. Before this, a superseded clip's failed play() promise set
+   currentAudio = null while the NEWER clip was the one playing - after that no stop could reach the new
+   clip, so it played on into the next slide (seen in dev mode: G0's question still talking over T8). */
+let _audioGen = 0;
 function stopAudio() {
+  _audioGen++;
   if (currentAudio) {
     try {
+      currentAudio.onended = null;
+      currentAudio.onerror = null;
       currentAudio.pause();
     } catch (e) {}
     currentAudio = null;
@@ -200,10 +209,12 @@ function stopAudio() {
 function play(src, onEnd) {
   stopAudio();
   setPlaying(true);
+  const myGen = _audioGen;
   let done = false;
   const fire = () => {
-    if (done) return;
+    if (done || myGen !== _audioGen) return; // superseded by a newer clip / a stop: stay silent
     done = true;
+    currentAudio = null;
     setPlaying(false);
     if (onEnd) onEnd();
   };
@@ -211,14 +222,13 @@ function play(src, onEnd) {
     const a = new Audio(AssetLoader.url(src));
     currentAudio = a;
     a.onended = fire;
-    a.onerror = () => {
-      currentAudio = null;
+    const failed = () => {
+      if (myGen !== _audioGen) return; // an old clip failing must never touch the one playing now
+      if (currentAudio === a) currentAudio = null;
       setTimeout(fire, 1200);
     };
-    a.play().catch(() => {
-      currentAudio = null;
-      setTimeout(fire, 1200);
-    });
+    a.onerror = failed;
+    a.play().catch(failed);
   } else {
     setTimeout(fire, 800);
   }
@@ -1037,7 +1047,8 @@ function mountTapOptions({
            tapped word first - and the hint (glow, others greyed, hand) appears as that line starts */
         if (walkHint && state.attempts >= _maxA) { revealAnswer("wrong"); return; }
         _fb = true;
-        _afterWord(() => {
+        // a WRONG tap does not speak its word - only the wiggle + the wrong sfx, then that rung's feedback
+        ((cb) => cb())(() => {
           // speak the tapped word FIRST, then the layered feedback VO (no overlap)
           if (state.attempts >= _maxA) {
             _fb = false;
@@ -1047,6 +1058,10 @@ function mountTapOptions({
             // 2nd wrong = the question again, then every option glows while it says its own word.
             state.scaffoldLevel = Math.max(state.scaffoldLevel, state.attempts >= 2 ? 2 : 1);
             if (state.attempts >= 2) walkOptions(_feedbackDone);
+            // data.hint1_vo: the 1st miss also speaks the slide's hint-1 line (reference: "फिर से कोशिश कीजिए…")
+            else if (_d.hint1_vo && audioFor(slide, "try_again")) play(audioFor(slide, "try_again"), _feedbackDone);
+            // data.hint1_question: the 1st miss asks the question again
+            else if (_d.hint1_question) play(audioFor(slide, "question") || audioFor(slide, "prompt") || null, _feedbackDone);
             else _feedbackDone();
           } else if (state.attempts >= 2) {
             _fb = false;
@@ -1089,9 +1104,9 @@ function mountTapOptions({
       if (k >= cells.length) { done(); return; }
       const c = cells[k++];
       onEach(c);
-      if (glow) c.classList.add("qp-saying");
+      if (glow) c.classList.add("qp-saying", "opt-walk");
       play(_optAudio(c), () => {
-        c.classList.remove("qp-saying");
+        c.classList.remove("qp-saying", "opt-walk");
         setTimeout(next, 180);
       });
     };
@@ -1101,7 +1116,9 @@ function mountTapOptions({
     state.hintActive = true;
     setSwMood("hint");
     const live = _cells().filter((c) => !c.classList.contains("faded"));
-    play(audioFor(slide, "question") || audioFor(slide, "prompt") || null, () => {
+    // data.hint2_options_only: hint 2 skips the question and goes straight to the options
+    const lead = _d.hint2_options_only ? null : (audioFor(slide, "question") || audioFor(slide, "prompt") || null);
+    (lead ? (f) => play(lead, f) : (f) => f())(() => {
       if (!isCurrent()) return;
       _sayEach(live, () => {}, () => {
         state.hintActive = false;
@@ -1123,11 +1140,18 @@ function mountTapOptions({
       cells.forEach((c) => c.classList.remove("opt-seq-hidden", "qp-saying"));
       state.locked = false;
     };
-    play(audioFor(slide, "question") || audioFor(slide, "prompt") || null, () => {
+    // data.reveal_delay_ms: wait (e.g. for a puzzle piece to finish opening) before the question speaks
+    const delay = _d.reveal_delay_ms || 0;
+    setTimeout(() => {
       if (!isCurrent()) return;
-      _sayEach(cells, (c) => c.classList.remove("opt-seq-hidden"), open, false);
-    });
-    setTimeout(() => { if (isCurrent()) open(); }, 20000); // safety net: never a dead question
+      play(audioFor(slide, "question") || audioFor(slide, "prompt") || null, () => {
+        if (!isCurrent()) return;
+        // data.silent_options: only the question is spoken - the options then simply appear
+        if (_d.silent_options) open();
+        else _sayEach(cells, (c) => c.classList.remove("opt-seq-hidden"), open, false);
+      });
+    }, delay);
+    setTimeout(() => { if (isCurrent()) open(); }, 20000 + delay); // safety net: never a dead question
   }
   state.replayAudio = () => {
     if (state.locked || state.hintActive || isPlaying) return;
@@ -1902,9 +1926,10 @@ function mountFillBlanks(q, host, onDone, isCurrent) {
       cell.classList.add("wrong-flash"); setTimeout(() => cell.classList.remove("wrong-flash"), 700);
       sfxWrongSoft(); setSwMood("tryagain");
       SwiftPAL.emit("answer_wrong", { slide_id: q.id, phase: q.phase, attempts: state.attempts });
-      play(wordAudio(w), () => {
+      // a wrong word is not spoken - straight to that rung's feedback
+      ((cb) => cb())(() => {
         if (!isCurrent()) return;
-        if (wrong === 1) { state.scaffoldLevel = 1; busy = false; }   // Review 1: 1st wrong = the wiggle + the tapped word, no VO
+        if (wrong === 1) { state.scaffoldLevel = 1; if (d.hint1_question) play(audioFor(q, "prompt") || null, () => { busy = false; }); else busy = false; }   // hint 1 = the question again (puzzle)
         else if (wrong === 2) { state.scaffoldLevel = 2; sayAll(() => { busy = false; }); }
         else { state.scaffoldLevel = 3; handOn = true; setSwMood("hint"); pointAtAnswer();
                play(audioFor(q, "reveal") || null, () => { busy = false; }); }
@@ -2066,7 +2091,7 @@ function mountQuestionPuzzle(host, slide) {
                         470 / ((PIECE_BOUNDS[g][3] - PIECE_BOUNDS[g][1]) + 2 * EDGE));
     /* Review 1 ("puzzle part छोटा लग रहा है"): the open piece grows SIDEWAYS only - up to 1.4x wider than
        its height scale, never past ~1150px - so the height (and the header clearance) stays as it was */
-    const BX = Math.min(BY * 1.4, 1150 / ((PIECE_BOUNDS[g][2] - PIECE_BOUNDS[g][0]) + 2 * EDGE));
+    const BX = Math.min(BY * 1.65, 1250 / ((PIECE_BOUNDS[g][2] - PIECE_BOUNDS[g][0]) + 2 * EDGE)); // longer again (was 1.4 / 1150)
     const t = PIECE_THEMES[g % PIECE_THEMES.length], [x0, y0, x1, y1] = PIECE_BOUNDS[g], notch = PIECE_NOTCH[g];
     const vx = x0 - EDGE, vy = y0 - EDGE, vw = x1 - x0 + 2 * EDGE, vh = y1 - y0 + 2 * EDGE;
     const qx = R[g][0], qy = R[g][1], qw = R[g][2] - R[g][0], qh = R[g][3] - R[g][1];
@@ -2153,12 +2178,16 @@ function mountQuestionPuzzle(host, slide) {
           {offset: .75, transform: "scale(1.03)"},
           {transform: "none"},
         ], {duration: T, easing: "cubic-bezier(.45,.05,.35,1)"});
+        // the question (and its answer row) appear only once the piece has fully opened
         [...bigBody.children].forEach((part, n) => part.animate(
-          [{opacity: 0, transform: "translateY(16px)"}, {opacity: 0, offset: .65, transform: "translateY(16px)"}, {opacity: 1, transform: "none"}],
-          {duration: T + 220 * n, easing: "ease-out"},
+          [{opacity: 0, transform: "translateY(16px)"}, {opacity: 1, transform: "none"}],
+          {duration: stillMotion ? 1 : 350, delay: T + 120 * n, easing: "ease-out", fill: "backwards"},
         ));
       }));
       SwiftPAL.emit("puzzle_question_opened", {slide_id:q.id, piece:i});
+      // ...and the question is spoken only then too (options keep arriving one by one after it)
+      const OPEN_MS = T + 150;
+      q.data.reveal_delay_ms = OPEN_MS;
       /* [puzzle-5] the question closes back into its piece - shared by both question kinds */
       const closeQ = (_, success) => {
           allFirstTry = allFirstTry && success && state.attempts === 0;
@@ -2239,7 +2268,7 @@ function mountQuestionPuzzle(host, slide) {
         },
         onAnswer:closeQ,
       });
-      if (!q.data.reveal_seq || q.data.kind === "fill_blanks") read();
+      if (!q.data.reveal_seq || q.data.kind === "fill_blanks") later(() => { if (currentQuestion === q) read(); }, OPEN_MS);
       // keep the puzzle's own replay (it knows which question is open) instead of the module's
       state.replayAudio = read;
     };
@@ -2398,9 +2427,9 @@ function mountReadingPractice(host, slide) {
   mic.className = "reading-mic";
   mic.type = "button";
   mic.setAttribute("aria-label", "वाक्य पढ़ने के लिए माइक्रोफ़ोन");
-  // Mic art = assets/UI/audio_button.svg (58x60), inlined. While the child reads, the art fades out (.mic) and the same
+  // Mic art = assets/UI/audio_button.svg (58x60), inlined, recoloured to the Play button's yellow (navy glyph). While the child reads, the art fades out (.mic) and the same
   // blue pill with live voice bars fades in (.mic-wave) - the existing p2-rec CSS drives both.
-  mic.innerHTML = '<svg viewBox="0 0 58 60" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="माइक"><g class="mic"><rect x="8" y="4" width="41.1559" height="44" rx="20.578" fill="url(#readingPillGrad)"/><rect x="6" y="2" width="45.1559" height="48" rx="22.578" stroke="white" stroke-width="4"/><g mask="url(#readingMicMask)"><rect x="17.9111" y="15.3335" width="21.434" height="21.434" fill="white"/></g></g><g class="mic-wave"><rect x="8" y="4" width="41.1559" height="44" rx="20.578" fill="url(#readingPillGrad)"/><rect x="6" y="2" width="45.1559" height="48" rx="22.578" stroke="white" stroke-width="4"/><g fill="white" transform="translate(-2.42 0)"><rect x="22.9" y="22" width="2.2" height="8" rx="1.1"/><rect x="26.4" y="19" width="2.2" height="14" rx="1.1"/><rect x="29.9" y="17" width="2.2" height="18" rx="1.1"/><rect x="33.4" y="19" width="2.2" height="14" rx="1.1"/><rect x="36.9" y="22" width="2.2" height="8" rx="1.1"/></g></g><defs><linearGradient id="readingPillGrad" x1="8" y1="26" x2="49.1559" y2="26" gradientUnits="userSpaceOnUse"><stop stop-color="#1987FC"/><stop offset="1" stop-color="#1565F4"/></linearGradient><mask id="readingMicMask" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="20" y="18" width="17" height="16"><image href="' + READING_MIC_PNG + '" x="20.5781" y="18" width="16" height="16" preserveAspectRatio="none"/></mask></defs></svg>';
+  mic.innerHTML = '<svg viewBox="0 0 58 60" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="माइक"><g class="mic"><rect x="8" y="4" width="41.1559" height="44" rx="20.578" fill="url(#readingPillGrad)"/><rect x="6" y="2" width="45.1559" height="48" rx="22.578" stroke="white" stroke-width="4"/><g transform="translate(28.58 26) scale(1.3) translate(-28.58 -26)"><g mask="url(#readingMicMask)"><rect x="17.9111" y="15.3335" width="21.434" height="21.434" fill="#0B3D8C"/></g></g></g><g class="mic-wave"><rect x="8" y="4" width="41.1559" height="44" rx="20.578" fill="url(#readingPillGrad)"/><rect x="6" y="2" width="45.1559" height="48" rx="22.578" stroke="white" stroke-width="4"/><g fill="#0B3D8C" transform="translate(-2.42 0)"><rect x="22.9" y="22" width="2.2" height="8" rx="1.1"/><rect x="26.4" y="19" width="2.2" height="14" rx="1.1"/><rect x="29.9" y="17" width="2.2" height="18" rx="1.1"/><rect x="33.4" y="19" width="2.2" height="14" rx="1.1"/><rect x="36.9" y="22" width="2.2" height="8" rx="1.1"/></g></g><defs><linearGradient id="readingPillGrad" x1="0" y1="4" x2="0" y2="48" gradientUnits="userSpaceOnUse"><stop stop-color="#FFD24E"/><stop offset=".55" stop-color="#FCB717"/><stop offset="1" stop-color="#F2A80F"/></linearGradient><mask id="readingMicMask" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="20" y="18" width="17" height="16"><image href="' + READING_MIC_PNG + '" x="20.5781" y="18" width="16" height="16" preserveAspectRatio="none"/></mask></defs></svg>';
   card.querySelector(".ev-text").appendChild(mic);
   // Sentence bar: every story page uses the same type size as page T2 (27.3px); a sentence too long for one
   // line wraps to two lines at that same size instead of shrinking.
