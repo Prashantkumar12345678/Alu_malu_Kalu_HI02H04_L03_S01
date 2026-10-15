@@ -182,8 +182,11 @@ function setPlaying(on) {
      the cards untappable) is NOT delayed - it still follows each clip exactly. */
   const c = $("audioChip");
   clearTimeout(setPlaying._spkT);
-  if (c && on) c.classList.add("playing");
-  else if (c) setPlaying._spkT = setTimeout(() => { if (!isPlaying) c.classList.remove("playing"); }, 600);
+  // body.vo-spk = the speaker's grey "busy" look (reference HI02H11): on while any line speaks, off only
+  // after 600ms of real quiet so a read-out of several clips is one grey stretch, then it turns blue/active
+  const spk = (v) => { document.body.classList.toggle("vo-spk", v); if (c) c.classList.toggle("playing", v); };
+  if (on) spk(true);
+  else setPlaying._spkT = setTimeout(() => { if (!isPlaying) spk(false); }, 600);
   swApplyPose(); // freeze/unfreeze Swiftie's mouth: animate only while a clip is sounding
   if (typeof bgmUpdate === "function") bgmUpdate(); // the music steps back while a line is spoken
 }
@@ -757,8 +760,8 @@ function nudgeNavBtn() {
     parseFloat(
       getComputedStyle(document.documentElement).getPropertyValue("--scale"),
     ) || 1;
-  nh.style.left = (r.left - sw.left) / scale + r.width / scale / 2 - 48 + "px";
-  nh.style.top = (r.top - sw.top) / scale + r.height / scale / 2 - 6 + "px";
+  nh.style.left = (r.left - sw.left) / scale + r.width / scale / 2 - HAND_TIP_X + "px";
+  nh.style.top = handTopFor(btn, r, sw, scale) + "px"; // fingertip 2px above the button's bottom border
   nh.classList.add("show");
 }
 
@@ -802,8 +805,8 @@ function startNudge(slide, target) {
         getComputedStyle(document.documentElement).getPropertyValue("--scale"),
       ) || 1;
     nh.style.left =
-      (r.left - sw.left) / scale + r.width / scale / 2 - 48 + "px";
-    nh.style.top = (r.top - sw.top) / scale + r.height / scale - 30 + "px";
+      (r.left - sw.left) / scale + r.width / scale / 2 - HAND_TIP_X + "px";
+    nh.style.top = (r.top - sw.top) / scale + r.height / scale - 30 - HAND_LIFT + "px";
     nh.classList.add("show");
     state.nudgeUsed = true;
     state.scaffoldLevel = Math.max(state.scaffoldLevel, 1);
@@ -826,10 +829,22 @@ function pointNudgeAt(el) {
     parseFloat(
       getComputedStyle(document.documentElement).getPropertyValue("--scale"),
     ) || 1;
-  nh.style.left = (r.left - sw.left) / scale + r.width / scale / 2 - 48 + "px";
-  // fingertip overlaps the lower part of the tile (close to it, not far below)
-  nh.style.top = (r.top - sw.top) / scale + r.height / scale - 44 + "px";
+  nh.style.left = (r.left - sw.left) / scale + r.width / scale / 2 - HAND_TIP_X + "px";
+  nh.style.top = handTopFor(el, r, sw, scale) + "px";
   nh.classList.add("show");
+}
+/* Where the hand stands: its fingertip (at y=6 in the 96px art, +2 for the resting bob = 8px below the
+   hand's top) sits just above the target's bottom border - 4px above it on an answer box, 2px above it
+   on a button. */
+const HAND_TIP_Y = 8;  // fingertip of the hand art as shown (rotated 34deg so it points straight up): y=6 in the 96px box (+2 resting bob)
+const HAND_TIP_X = 48; // the hand box is centred on the target
+const HINT2_PAUSE_MS = 800; // pause between the 2nd wrong tap and hint 2's first word (whole game)
+const HAND_LIFT = 4; // every hand nudge sits 4px higher (asked)
+function handTopFor(el, r, sw, scale) {
+  const gap = el.closest && el.closest(".opt-cell, .fb-opt") ? 8 : el.closest && el.closest(".tis-hot") ? 4 : 2; // answer cards: 8px above the border
+  const micLift = el.closest && el.closest(".reading-mic") ? 6 : 0; // the story mic: a touch higher still
+  const sceneLift = el.closest && el.closest(".tis-hot") ? 40 : 0;   // Q1 picture box: the hand comes up into the box
+  return (r.bottom - sw.top) / scale - gap - HAND_TIP_Y - HAND_LIFT - micLift - sceneLift;
 }
 
 /* ---------- 7. HINT / FEEDBACK BOX ----------
@@ -1118,6 +1133,10 @@ function mountTapOptions({
   function walkOptions(after) {
     state.hintActive = true;
     setSwMood("hint");
+    // a short breath after the wrong tap before hint 2 starts speaking (taps stay blocked meanwhile)
+    setTimeout(() => { if (isCurrent()) walkOptionsNow(after); }, HINT2_PAUSE_MS);
+  }
+  function walkOptionsNow(after) {
     const live = _cells().filter((c) => !c.classList.contains("faded"));
     // data.hint2_options_only: hint 2 skips the question and goes straight to the options
     const lead = _d.hint2_options_only ? null : (audioFor(slide, "question") || audioFor(slide, "prompt") || null);
@@ -1202,7 +1221,8 @@ function mountTapOptions({
         audioFor(slide, "correct") ||
         audioFor(slide, "try_again") ||
         null,
-      () => {},
+      // [reference BUG_08] the bulb face is only for while the hint is spoken
+      () => { if (isCurrent() && swMood === "hint") setSwMood("point"); },
     );
   }
   $("hintBtn").onclick = () => {
@@ -1758,6 +1778,47 @@ function optWordKaraoke(cell) {
   }
   return evWordKaraoke(lbl);
 }
+/* Speech timing measured off each recording (_qa/build_vo_timing.py -> CARD.assets.audio_timing):
+   {s, e, segs:[[ms,ms],...]} = where the voice starts, ends, and the spoken stretches between pauses. */
+function audioTimingFor(src) {
+  const A = (CARD.assets && CARD.assets.audio) || {}, T = (CARD.assets && CARD.assets.audio_timing) || {};
+  if (!src) return null;
+  for (const k in A) {
+    const p = A[k];
+    if (src === p || src === AssetLoader.url(p) || src.endsWith(p)) {
+      const id = p.split("?")[0].split("/").pop().replace(/\.[^.]+$/, "");
+      return T[id] || null;
+    }
+  }
+  return null;
+}
+/* Per-word [start, end) in ms that follows the real voice: the words are cut into phrases at their
+   punctuation (, । ! ? ”), the recording's spoken stretches are merged across their shortest pauses
+   until there is one stretch per phrase, and inside a stretch the words share its time by length.
+   With fewer stretches than phrases the whole spoken span is shared out the same way. */
+function wordScheduleFor(words, timing) {
+  const wt = (w) => Math.max(1, Array.from((w.textContent || "").replace(/[“”"‘’,।!?;:—-]/g, "")).length);
+  const phrases = [];
+  let cur = [];
+  words.forEach((w, i) => {
+    cur.push(i);
+    if (/[,।!?;:”"]$/.test((w.textContent || "").trim()) || i === words.length - 1) { phrases.push(cur); cur = []; }
+  });
+  let segs = (timing.segs || [[timing.s, timing.e]]).map((x) => x.slice());
+  while (segs.length > phrases.length && segs.length > 1) {
+    let k = 0, best = Infinity;
+    for (let i = 0; i < segs.length - 1; i++) { const g = segs[i + 1][0] - segs[i][1]; if (g < best) { best = g; k = i; } }
+    segs.splice(k, 2, [segs[k][0], segs[k + 1][1]]);
+  }
+  const spans = segs.length === phrases.length ? segs.map((sg, i) => [sg, phrases[i]]) : [[[timing.s, timing.e], words.map((_, i) => i)]];
+  const out = new Array(words.length);
+  spans.forEach(([[a, b], idxs]) => {
+    const tot = idxs.reduce((n, i) => n + wt(words[i]), 0);
+    let t = a;
+    idxs.forEach((i) => { const d = (b - a) * wt(words[i]) / tot; out[i] = [t, t + d]; t += d; });
+  });
+  return out;
+}
 function evWordKaraoke(line, readingDuration, from = 0, to) {
   const words = [...line.querySelectorAll(".ev-word")].slice(from, to);
   if (!words.length) return () => {};
@@ -1772,7 +1833,12 @@ function evWordKaraoke(line, readingDuration, from = 0, to) {
   const total = weights.reduce((sum, weight) => sum + weight, 0);
   const startedAt = performance.now();
   const fallbackDuration = readingDuration || Math.max(900, total * 65);
-  let active = -1;
+  let active = -1, schedFor = null, sched = null;
+  const show = (next) => {
+    if (next === active) return;
+    words.forEach((word, i) => word.classList.toggle("ev-word-now", i === next));
+    active = next;
+  };
   const timer = setInterval(() => {
     const audio = currentAudio;
     const hasAudioTime =
@@ -1780,6 +1846,17 @@ function evWordKaraoke(line, readingDuration, from = 0, to) {
       Number.isFinite(audio.duration) &&
       audio.duration > 0 &&
       !audio.paused;
+    // a measured recording: follow the real voice word by word
+    if (hasAudioTime && !readingDuration) {
+      if (schedFor !== audio) { schedFor = audio; const tm = audioTimingFor(audio.src); sched = tm ? wordScheduleFor(words, tm) : null; }
+      if (sched) {
+        const ms = audio.currentTime * 1000;
+        let next = -1;
+        for (let i = 0; i < sched.length; i++) if (ms >= sched[i][0]) next = i;
+        show(next);
+        return;
+      }
+    }
     const progress = hasAudioTime
       ? audio.currentTime / audio.duration
       : (performance.now() - startedAt) / fallbackDuration;
@@ -1793,12 +1870,8 @@ function evWordKaraoke(line, readingDuration, from = 0, to) {
         break;
       }
     }
-    if (next === active) return;
-    words.forEach((word, i) =>
-      word.classList.toggle("ev-word-now", i === next),
-    );
-    active = next;
-  }, 60);
+    show(next);
+  }, 40);
   return () => {
     clearInterval(timer);
     words.forEach((word) => word.classList.remove("ev-word-now"));
@@ -1894,6 +1967,8 @@ function mountFillBlanks(q, host, onDone, isCurrent) {
   const pointAtAnswer = () => {
     cells.forEach(c => c.classList.remove("reveal-hold"));
     const c = cellFor(answers[bi]); if (!c) return;
+    // [reference BUG_10] at the last rung only the answer stays live - the other words grey out
+    cells.forEach(o => o.classList.toggle("faded", o !== c && !o.classList.contains("fb-used")));
     c.classList.add("reveal-hold"); pointNudgeAt(c);
   };
   const flyInto = (cell, slot, word, then) => {
@@ -1927,7 +2002,14 @@ function mountFillBlanks(q, host, onDone, isCurrent) {
     SwiftPAL.emit(d.signal_name || "evidence_qa_first_try", { slide_id: q.id, phase: q.phase, value: true, first_try: wrong === 0,
       attempts: wrong + 1, scaffold_level: state.scaffoldLevel, latency_ms: Date.now() - state.slideStart });
     // शाबाश + confetti first, then the finished sentence is read back
-    playShabash(() => { if (isCurrent()) play(audioFor(q, "correct") || null, () => { if (isCurrent()) onDone(q, wrong === 0); }); });
+    playShabash(() => {
+      if (!isCurrent()) return;
+      // the completed sentence is read back and each word lights up (story orange) as it is spoken
+      line.querySelectorAll(".fb-text, .fb-blank").forEach((w) => w.classList.add("ev-word"));
+      let stopK = () => {};
+      play(audioFor(q, "correct") || null, () => { stopK(); if (isCurrent()) onDone(q, wrong === 0); });
+      stopK = evWordKaraoke(line);
+    });
   };
   showActive();
   cells.forEach(cell => {
@@ -1954,9 +2036,9 @@ function mountFillBlanks(q, host, onDone, isCurrent) {
       ((cb) => cb())(() => {
         if (!isCurrent()) return;
         if (wrong === 1) { state.scaffoldLevel = 1; if (d.hint1_question) play(audioFor(q, "prompt") || null, () => { busy = false; }); else busy = false; }   // hint 1 = the question again (puzzle)
-        else if (wrong === 2) { state.scaffoldLevel = 2; sayAll(() => { busy = false; }); }
+        else if (wrong === 2) { state.scaffoldLevel = 2; setTimeout(() => { if (isCurrent()) sayAll(() => { busy = false; }); }, HINT2_PAUSE_MS); }
         else { state.scaffoldLevel = 3; handOn = true; setSwMood("hint"); pointAtAnswer();
-               play(audioFor(q, "reveal") || null, () => { busy = false; }); }
+               play(audioFor(q, "reveal") || null, () => { busy = false; if (swMood === "hint") setSwMood("point"); }); }
       });
     };
   });
@@ -2252,9 +2334,7 @@ function mountQuestionPuzzle(host, slide) {
                   board.hidden = false;
                   // Keep the revealed, mixed-up arrangement until the learner moves it.
                   tiles.forEach((piece, n) => positionTile(piece, positions[n]));
-                  // a piece that starts in its own slot is already right - snap it in (drop() then settles the rest)
-                  const own = positions.findIndex((slot, piece) => slot === piece && !placed.has(piece));
-                  if (own !== -1) later(() => drop(own, own), 600);
+
                   read();
                 }
               }, stillMotion ? 50 : 2300);
@@ -2298,50 +2378,45 @@ function mountQuestionPuzzle(host, slide) {
     };
     return tile;
   });
+  /* Free arrangement (asked): a piece goes wherever it is dropped - if that slot holds another piece the two
+     swap places. Nothing is rejected on the way; the picture is complete only when EVERY piece sits in its
+     own slot, and only then are the pieces fixed and the celebration runs. */
+  let finished = false;
   const drop = (i, target) => {
-    if (!active || placed.has(i) || placed.has(target)) return;
-    if (i !== target) {
-      tiles[i].classList.add("wrong-flash");
-      later(() => tiles[i].classList.remove("wrong-flash"), 700);
-      sfxWrongSoft();
-      SwiftPAL.emit("puzzle_drop_wrong", {piece:i, target});
-      return;
-    }
-    const zone = board.querySelector(`[data-slot="${target}"]`);
-    const sourceSlot = positions[i];
-    const occupant = positions.findIndex((slot, piece) => piece !== i && !placed.has(piece) && slot === target);
-    if (occupant !== -1) {
-      positions[occupant] = sourceSlot;
-      positionTile(tiles[occupant], sourceSlot);
-    }
-    positions[i] = target;
-    paint(zone, i);
-    zone.classList.add("filled");
-    zone.disabled = true;
-    tiles[i].hidden = true;
+    if (!active || finished) return;
+    const src = positions[i];
     selectedPiece = null;
     tiles.forEach(t => t.classList.remove("selected"));
-    placed.add(i);
+    if (src === target) return;
+    const occupant = positions.findIndex((slot, piece) => piece !== i && slot === target);
+    if (occupant !== -1) {
+      positions[occupant] = src;
+      positionTile(tiles[occupant], src);
+    }
+    positions[i] = target;
+    positionTile(tiles[i], target);
     sfxPieceSnap();
+    SwiftPAL.emit("puzzle_piece_placed", {slide_id:pieceQuestions[i].id, piece:i, slot:target,
+      pieces:positions.filter((slot, piece) => slot === piece).length});
+    if (positions.every((slot, piece) => slot === piece)) finishPicture();
+  };
+  const finishPicture = () => {
+    finished = true;
+    questions.forEach((_, n) => {
+      const zone = board.querySelector(`[data-slot="${n}"]`);
+      paint(zone, n);
+      zone.classList.add("filled");
+      zone.disabled = true;
+      tiles[n].hidden = true;
+      placed.add(n);
+    });
     later(sfxCorrect, 110);
-    SwiftPAL.emit("puzzle_piece_placed", {slide_id:pieceQuestions[i].id, piece:i, pieces:placed.size});
-    // A piece that the swap above just slid into ITS OWN slot looks finished, so it IS finished: snap it
-    // in now instead of making the child tap a piece that is already right (it used to happen only for
-    // the very last piece, and only sometimes - reported as "5 pieces, then I have to tap the 6th").
-    const settled = positions.findIndex((slot, piece) => !placed.has(piece) && slot === piece);
-    if (settled !== -1) {
-      later(() => drop(settled, settled), 260);
-      return;
-    }
-    if (placed.size === questions.length) {
-      wrap.classList.add("complete");
-      $("promptText").textContent = "चित्र पूरा हो गया!";
-      SwiftPAL.emit("puzzle_completed", {pieces:placed.size});
-      setSwMood("happy");
-      // Review 1: let the finished picture sit for a moment (1.5s), THEN the confetti
-      later(() => { sfxCorrect(); confettiCannon(); }, 1500);
-      later(() => completeSlide(allFirstTry), 3700);
-    }
+    wrap.classList.add("complete");
+    $("promptText").textContent = "चित्र पूरा हो गया!";
+    SwiftPAL.emit("puzzle_completed", {pieces:questions.length});
+    setSwMood("happy");
+    // picture complete: after a short beat, confetti + "शाबाश!" together; move on once she has said it
+    later(() => { sfxCorrect(); playShabash(() => later(() => completeSlide(allFirstTry), 1200)); }, 1500);
   };
   questions.forEach((_, i) => {
     const zone = document.createElement("button");
@@ -4938,7 +5013,7 @@ const SlideModules = {
             } else el.classList.add("faded");
           });
           SwiftPAL.emit("answer_revealed", { slide_id: slide.id, phase: slide.phase, attempts: sceneAttempts });
-          play(audioFor(slide, "reveal") || audioFor(slide, "hint") || audioFor(slide, "try_again") || null, () => {});
+          play(audioFor(slide, "reveal") || audioFor(slide, "hint") || audioFor(slide, "try_again") || null, () => { if (swMood === "hint") setSwMood("point"); });
         } else if (sceneAttempts === 2 && d.identify_sequence) {
           state.hintActive = true;
           const boxes = [...frame.querySelectorAll(".tis-hot")];
@@ -4948,7 +5023,7 @@ const SlideModules = {
             if (i >= boxes.length) {state.hintActive = false;return;}
             play(audioAsset(i === 0 ? "vo_o_kaalu" : "vo_review_identify_correct"), () => speak(i + 1));
           };
-          speak(0);
+          setTimeout(() => speak(0), HINT2_PAUSE_MS); // a short breath before hint 2 speaks
         } else play(audioFor(slide, sceneAttempts >= 2 ? "hint" : "try_again") || audioFor(slide, "try_again") || null, () => {});
       };
       (d.hotspots || []).forEach((h) => {
@@ -4976,9 +5051,11 @@ const SlideModules = {
               first_try: sceneAttempts === 0,
               attempts: sceneAttempts + 1,
             });
-            play(audioFor(slide, "correct") || null, () =>
-              playShabash(() => setTimeout(() => completeSlide(true), 700)),
-            );
+            // [reference BUG_20] once the answer has been revealed, the tap says only "शाबाश!" - not its name again
+            const revealed = sceneAttempts >= (CARD.scaffold_rules.max_attempts || 3);
+            const cheer = () => playShabash(() => setTimeout(() => completeSlide(true), 700));
+            if (revealed) cheer();
+            else play(audioFor(slide, "correct") || null, cheer);
           } else {
             hs.classList.add("shake");
             setTimeout(() => hs.classList.remove("shake"), 500);
@@ -4994,6 +5071,7 @@ const SlideModules = {
       state.replayAudio = () =>
         play(audioFor(slide, "prompt") || null, () => {});
       setSwMood("point");
+      state.ownsAudio = true; // this slide speaks its own question - mountSlide must not play it a second time
       play(audioFor(slide, "prompt") || null, () => {});
       // No idle answer glow: help starts only after the learner's attempts.
     },

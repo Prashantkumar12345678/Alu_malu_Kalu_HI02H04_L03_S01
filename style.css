@@ -1762,3 +1762,22 @@ body.is-start .sg-mascot{transform:none;animation:none;}
 /* answer-card karaoke: the word being spoken turns the story pages' orange */
 .opt-cell .ev-opt-lbl .ev-word{transition:color .15s ease;}
 .opt-cell .ev-opt-lbl .ev-word.ev-word-now{color:#FF8A00;}
+/* fill-in question: the completed sentence's karaoke (story orange) */
+.fb-line .ev-word{transition:color .15s ease;}
+.fb-line .ev-word.ev-word-now{color:#FF8A00 !important;}
+/* Play button: the art's white top gloss washed the yellow out (opacity is already 1) - deepen the colour a
+   little so it reads solid against the busy title picture */
+.sg-btn{filter:saturate(1.25) contrast(1.08) drop-shadow(0 4px 8px rgba(11,61,140,.30));}
+/* header speaker (reference HI02H11): greyed + untappable while Swiftie speaks, normal blue and tappable
+   once she is quiet */
+body.vo-spk .audio-chip{pointer-events:none !important;opacity:.5 !important;filter:grayscale(1) brightness(1.2) !important;transition:opacity .2s,filter .2s;}
+.audio-chip{transition:opacity .2s,filter .2s;}
+/* Q1 (मालू पहचानो) picture a touch smaller: 940x529 -> 904x509 (~4%), same 16:9, same place */
+.stage.question-layout .tis-frame{width:904px;height:509px;}
+/* celebration Swiftie: no drop-shadow - its soft navy halo was cut flat at the art's bottom edge and read
+   as a faint grey box behind him on the yellow burst */
+.end-mascot{filter:none !important;}
+/* puzzle assembly: no blue rings - a picked piece just lifts (shadow), the slot under a dragged piece just
+   brightens a touch */
+.qp-tile.selected{outline:none !important;filter:drop-shadow(0 10px 12px rgba(11,61,140,.30));}
+.qp-slot.hover{outline:none !important;}
