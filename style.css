@@ -1691,3 +1691,8 @@ body.is-start .sg-mascot{transform:none;animation:none;}
 .sg-load.done{opacity:0;visibility:hidden;}
 .sg-load[hidden]{display:none;}
 @media (prefers-reduced-motion:reduce){.sg-load-fill::after{animation:none;}}
+
+/* BOOT LOADER (reference HI02H11): white boot screen with the ConveGenius mark, self-dismisses (no tap) */
+.boot-loader{position:fixed;inset:0;z-index:9999;background:#FFFFFF;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;}
+.boot-loader img{width:118px;height:118px;object-fit:contain;}
+.boot-loader.done{opacity:0;pointer-events:none;transition:opacity .4s ease;}

@@ -1,4 +1,59 @@
 const CARD = JSON.parse(document.getElementById("cardData").textContent);
+/* [ported from reference HI02H11, H11-227 / BUG_14] THE GAME STOPS WHILE NOBODY CAN SEE IT, AND GOES ON
+   FROM THE SAME POINT. Switch tab or go to the home screen on a tablet: everything falls silent; come back
+   and it carries on exactly where it was. The lesson is driven by timers (the next line after this one,
+   safety nets, the reveal's beats), so pausing the sound alone would let those run on in the dark. While
+   hidden: every setTimeout is held with the time it had left and re-armed with that on return (installed
+   here, before any engine code, so every timer in the file goes through it); every playing <audio> is
+   paused and resumed; the tone context is suspended; running animations are paused. setInterval is left
+   alone (its tickers read the clock). */
+(function () {
+  const _st = window.setTimeout.bind(window), _ct = window.clearTimeout.bind(window);
+  const timers = new Map();
+  let nextId = 1e9, paused = false;
+  window.setTimeout = function (fn, ms) {
+    const args = Array.prototype.slice.call(arguments, 2), id = nextId++;
+    const t = { left: Math.max(0, +ms || 0), due: 0, real: null };
+    const fire = () => { timers.delete(id); if (typeof fn === "function") fn.apply(window, args); };
+    t.arm = () => { t.due = Date.now() + t.left; t.real = _st(fire, t.left); };
+    timers.set(id, t);
+    if (!paused) t.arm();
+    return id;
+  };
+  window.clearTimeout = function (id) {
+    const t = timers.get(id);
+    if (t) { if (t.real !== null) _ct(t.real); timers.delete(id); }
+    else _ct(id);
+  };
+  const media = new Set(), heldMedia = [], heldAnims = [];
+  const _play = HTMLMediaElement.prototype.play;
+  HTMLMediaElement.prototype.play = function () {
+    if (!media.has(this)) { media.add(this); const m = this; m.addEventListener("ended", () => { if (!m.loop) media.delete(m); }); }
+    if (paused) { heldMedia.push(this); return Promise.resolve(); } // started while hidden: start it on return
+    return _play.apply(this, arguments);
+  };
+  const toneCtx = () => { try { return typeof _juiceAC !== "undefined" && _juiceAC ? [_juiceAC] : []; } catch (e) { return []; } };
+  function pause() {
+    if (paused) return;
+    paused = true;
+    const now = Date.now();
+    timers.forEach((t) => { if (t.real !== null) { _ct(t.real); t.real = null; t.left = Math.max(0, t.due - now); } });
+    toneCtx().forEach((c) => { try { if (c.state === "running") { c._fgHeld = true; c.suspend(); } } catch (e) {} });
+    media.forEach((m) => { try { if (!m.paused && !m.ended) { m.pause(); heldMedia.push(m); } } catch (e) {} });
+    try { (document.getAnimations ? document.getAnimations() : []).forEach((a) => { if (a.playState === "running") { a.pause(); heldAnims.push(a); } }); } catch (e) {}
+  }
+  function resume() {
+    if (!paused) return;
+    paused = false;
+    toneCtx().forEach((c) => { try { if (c._fgHeld) { c._fgHeld = false; c.resume(); } } catch (e) {} });
+    heldMedia.splice(0).forEach((m) => { try { const pr = _play.call(m); if (pr && pr.catch) pr.catch(() => {}); } catch (e) {} });
+    heldAnims.splice(0).forEach((a) => { try { a.play(); } catch (e) {} });
+    timers.forEach((t) => { if (t.real === null) t.arm(); });
+  }
+  document.addEventListener("visibilitychange", () => (document.hidden ? pause() : resume()));
+  window.addEventListener("pagehide", pause);
+  window.addEventListener("pageshow", () => { if (!document.hidden) resume(); });
+})();
 const AUDIO_EXT = (CARD.assets && CARD.assets.audio_ext) || "mp3"; // .ogg (maths) / .ogg (Hindi FLN)
 const IMG_EXT = (CARD.assets && CARD.assets.img_ext) || "png"; // .webp (working) / .webp (delivered/FLN) — twin of AUDIO_EXT (fixes A3)
 const ENGINE_VERSION = "2026.07.21b-unified"; // ENGINE STAMP — the receipt (verify_bundle.py) asserts a built game carries THIS exact string; a stale/divergent engine → hard FAIL, so the wrong engine can never silently ship. BUMP IN LOCKSTEP with engine_guard.py + swiftpal_build.py + unified_build.py + verify_bundle.py on EVERY engine change (r2: drag/pattern feedback standard + PHASE_TRANSITION; r3c: off-white toybox bg, dual-coded counting options numeral+hand, full-body landing mascot, true-corner square/rect; r3d: Swiftie mouth-stops-when-silent (still frame), Arabic display numerals 1/2/3, landing shows full 1..n hand row, volume-chip aligned in header pill; r4a: ADDITIVE rhyme modules MEET_RHYME + RHYME_YESNO + RHYME_PICK for phonological-awareness तुक games — no existing module touched; r4b: ADDITIVE sentence-reading modules SENTENCE_READ + SENTENCE_FIND for H06 वाक्य reading — no existing module touched; r4c: ADDITIVE TAP_ALL_WITH_SOUND multi-select for repeated-sound/alliteration; r4d: ADDITIVE SENTENCE_SOUND — read an alliterative line, tap the repeated sound; r4e: ADDITIVE middle-sound modules MEET_MIDDLE + TAP_MIDDLE_SOUND + MIDDLE_PICK_WORD + MIDDLE_YESNO for H02 बीच-की-ध्वनि games; r4f: ADDITIVE reading-direction modules READ_PATH + TAP_READ_ARROW + TAP_READ_POS + TRACK_FOLLOW (guided "animated tracker" variant of READ_PATH) (+ readPage helper) for H03 पठन-दिशा/tracking print-concept games; r4g: ADDITIVE classroom-label modules MEET_LABEL + TAP_LABEL_SCENE + TAP_WORD_FOR_OBJECT (+ MATCH_DRAG_N word-tile mode) for H03 environmental-print/label games; r4h: ADDITIVE READ_TRACE (finger-swipe drag across words) + FIX_TRACKING (correct a confused reader's wrong finger via TAP_READ_POS confused_at marker) for H03 finger-tracking games; r4i: ADDITIVE USE_INTERFACE (operate a mini media-player/device by tapping the right button — H03 symbol/button recognition) — no existing module touched; r4j: ADDITIVE syllable-clap modules MEET_SYLLABLE + SYLLABLE_CLAP + TAP_SYLLABLE_COUNT for H02 ताली syllable-counting (no-मात्रा words, one clap per अक्षर, match count→numeral) — no existing module touched; r4k: ADDITIVE DECODE_TAP — the decode-tap reader for H04 L02 (tap each अक्षर of a no-मात्रा 2-letter word L→R to hear its sound, then a BLEND button merges them into the spoken word + reveals its picture; ordered tapping counters the letter-reversal misconception) — no existing module touched; r4l: ADDITIVE MEET_GENDER_PAIR — teaches पुल्लिंग→स्त्रीलिंग word-FORM change by doing (masculine noun → feminine noun with the ending change badged; tap each to hear) for H11 L03 लिंग-रूप games — no existing module touched; r4m: ADDITIVE STORY_READ_PAGE — picture-cue sentence reading (child taps words + reads the whole sentence, picture as support) for H04 चित्र-संकेत कहानी-पठन games — no existing module touched).
@@ -121,8 +176,14 @@ function setPlaying(on) {
   // the dynamic Swiftie sits header-left; the audio-chip (header-right) pulses to signal playback
   isPlaying = on;
   document.body.classList.toggle("vo-lock", on);
+  /* [ported from reference H11-228 / BUG_07] THE SPEAKER DOES NOT BLINK BETWEEN THE WORDS OF ONE LINE.
+     Options are read as separate clips with a short breath between them; the chip's "playing" look now
+     lets go only after 600ms of real quiet, so a whole read-out is one stretch. body.vo-lock (what keeps
+     the cards untappable) is NOT delayed - it still follows each clip exactly. */
   const c = $("audioChip");
-  if (c) c.classList.toggle("playing", on);
+  clearTimeout(setPlaying._spkT);
+  if (c && on) c.classList.add("playing");
+  else if (c) setPlaying._spkT = setTimeout(() => { if (!isPlaying) c.classList.remove("playing"); }, 600);
   swApplyPose(); // freeze/unfreeze Swiftie's mouth: animate only while a clip is sounding
   if (typeof bgmUpdate === "function") bgmUpdate(); // the music steps back while a line is spoken
 }
@@ -863,6 +924,13 @@ function mountTapOptions({
   // Shuffle options once so the correct answer isn't pinned to one position (engine-wide anti
   // positional-bias — otherwise "always tap the same spot" can pass mastery). Opt out with
   // shuffle:false for inherently-ordered options (e.g. a number line).
+  let _fb = false, _pendingTap = null; // feedback is sounding / the tap that arrived meanwhile
+  const _feedbackDone = () => {
+    _fb = false;
+    const c = _pendingTap;
+    _pendingTap = null;
+    if (c && isCurrent() && !state.locked && !c.classList.contains("faded") && !c.classList.contains("correct")) c.onclick();
+  };
   const _opts =
     shuffle === false
       ? options.slice()
@@ -889,6 +957,15 @@ function mountTapOptions({
     cell.classList.add("opt-cell");
     cell.dataset.key = String(i);
     cell.onclick = () => {
+      /* [ported from reference 28t / 2026-09-04 no-cut-feedback] A TAP DURING FEEDBACK MUST COUNT, NOT
+         VANISH - and must not cut the clip either. While wrong-answer feedback is sounding (the tapped
+         word, the hint-2 walk) the latest tap is held in _pendingTap and run the moment that feedback
+         ends. During the question itself taps are still simply ignored. */
+      if (isCurrent() && !state.locked && _fb && (isPlaying || state.hintActive) &&
+          !cell.classList.contains("faded") && !cell.classList.contains("correct")) {
+        _pendingTap = cell;
+        return;
+      }
       if (
         !isCurrent() ||
         state.locked ||
@@ -956,16 +1033,23 @@ function mountTapOptions({
         const _maxA =
           (CARD.scaffold_rules && CARD.scaffold_rules.max_attempts) || 3;
         $("hintBtn").classList.add("show");
+        /* [ported from reference H11-235 / BUG_20] the third rung says ONLY the reveal line - not the
+           tapped word first - and the hint (glow, others greyed, hand) appears as that line starts */
+        if (walkHint && state.attempts >= _maxA) { revealAnswer("wrong"); return; }
+        _fb = true;
         _afterWord(() => {
           // speak the tapped word FIRST, then the layered feedback VO (no overlap)
           if (state.attempts >= _maxA) {
+            _fb = false;
             revealAnswer("wrong");
           } else if (walkHint) {
             // Review 1 ladder: 1st wrong = the wiggle + the tapped word only, no feedback VO;
             // 2nd wrong = the question again, then every option glows while it says its own word.
             state.scaffoldLevel = Math.max(state.scaffoldLevel, state.attempts >= 2 ? 2 : 1);
-            if (state.attempts >= 2) walkOptions();
+            if (state.attempts >= 2) walkOptions(_feedbackDone);
+            else _feedbackDone();
           } else if (state.attempts >= 2) {
+            _fb = false;
             state.scaffoldLevel = Math.max(state.scaffoldLevel, 2);
             if (runHint) runHint();
             else
@@ -974,6 +1058,7 @@ function mountTapOptions({
                 () => {},
               );
           } else {
+            _fb = false;
             state.scaffoldLevel = Math.max(state.scaffoldLevel, 1);
             play(audioFor(slide, "try_again") || null, () => {});
           }
@@ -1020,6 +1105,8 @@ function mountTapOptions({
       if (!isCurrent()) return;
       _sayEach(live, () => {}, () => {
         state.hintActive = false;
+        // [ported from reference H11-220 / BUG_08] the bulb face is only for while the hint is given
+        if (swMood === "hint") setSwMood("point");
         if (after) after();
       });
     });
@@ -7889,10 +7976,33 @@ function boot() {
     });
   })();
   refresh();
-  // the greeting is fetched first and alone, then she speaks (5s at most) while the rest downloads
+  // the greeting is fetched first and alone, while the rest downloads behind it
   AssetLoader.start([landSrc], lessonAssetUrls());
-  Promise.race([new Promise((r) => { const t = setInterval(() => { if (AssetLoader.has(landSrc)) { clearInterval(t); r(); } }, 50); }),
-                new Promise((r) => setTimeout(r, 5000))]).then(playLanding);
+  /* BOOT LOADER (reference HI02H11 boot()): the white ConveGenius splash holds at least 1.6s so the mark
+     is always seen, until the page has loaded (2.5s watchdog - never strand the child) and the greeting
+     file is in (5s at most). Then it fades and Swiftie greets on the title screen. */
+  (function () {
+    const bl = $("bootLoader");
+    const T0 = performance.now(), MIN_MS = 1600;
+    const pageLoaded = new Promise((r) => {
+      if (document.readyState === "complete") r();
+      else window.addEventListener("load", r, { once: true });
+      setTimeout(r, 2500);
+    });
+    const greetingIn = Promise.race([
+      new Promise((r) => { const t = setInterval(() => { if (AssetLoader.has(landSrc)) { clearInterval(t); r(); } }, 50); }),
+      new Promise((r) => setTimeout(r, 5000)),
+    ]);
+    let fired = false;
+    Promise.all([pageLoaded, greetingIn]).then(() => {
+      if (fired) return;
+      fired = true;
+      setTimeout(() => {
+        if (bl) { bl.classList.add("done"); setTimeout(() => bl.remove(), 450); }
+        playLanding();
+      }, Math.max(0, MIN_MS - (performance.now() - T0)));
+    });
+  })();
 
   $("sgBtn").onclick = () => {
     if ($("sgBtn").classList.contains("sg-waiting")) return;
@@ -7956,6 +8066,7 @@ function buildDevNav() {
   });
   const label=document.createElement("span");label.className="dev-nav-lbl";
   const resetOverlays=()=>{
+    const _bl=$("bootLoader"); if(_bl) _bl.remove();
     clearHost();
     $("phaseGate").classList.remove("show","sink");$("phaseGate").setAttribute("aria-hidden","true");
     $("stage").classList.remove("blurred","gating");
