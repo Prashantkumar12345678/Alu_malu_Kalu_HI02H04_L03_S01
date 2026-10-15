@@ -14,9 +14,9 @@ text.update(A["audio_text"])
 NOTES = {  # lines whose script needs a production note
     "vo_review_story_8a": "मालू आलू खोज रहा था कि उसे सुनाई दिया, (VO यहीं रुकती है — “भौं, भौं, भौं” नहीं बोलना; उसकी जगह sfx_puppy_bark बजती है)",
 }
-SFX = [("sfx_puppy_bark", "SFX (असली रिकॉर्डिंग, AI नहीं): छोटे पिल्ले की 3 प्यारी, पतली भौंक — भौं, भौं, भौं (~0.8 सेकंड)। "
+SFX = [("sfx_dog_bark", "SFX (असली रिकॉर्डिंग, AI नहीं): बड़े कुत्ते (St. Bernard) की 3 भारी भौंक — भौं, भौं, भौं (~1.3 सेकंड)। "
         "कहानी पेज 8 पर VO “…उसे सुनाई दिया,” के तुरंत बाद बजती है। "
-        "स्रोत: freesound.org/s/591137 (dtmendes, cockapoo puppy), लाइसेंस CC0; पिच थोड़ी ऊँची की गई।")]
+        "स्रोत: freesound.org/s/784914 (Primitv094), लाइसेंस CC0।")]
 
 rows, seen = [], set()
 def fid(k):
