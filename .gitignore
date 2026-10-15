@@ -1,2 +1,14 @@
-# Microsoft Office temporary lock files
+# Only the game itself is kept in git / deployed: index.html, app.js, style.css, confetti.*, assets/.
+# Everything below is dev-side and stays on this machine.
+_qa/
+_backup/
+_masters/
+voiceovers/
+voiceovers 2/
+.vscode/
+*.xlsx
+*.pdf
+**/__pycache__/
+.DS_Store
+Thumbs.db
 ~$*

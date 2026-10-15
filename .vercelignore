@@ -1,0 +1,14 @@
+# Dev-side only - never needs to reach Vercel (same idea as the reference build's .vercelignore):
+# QA tooling and test captures, source recordings, safety backups, docs and sheets.
+_qa/
+_masters/
+_backup/
+voiceovers/
+**/__pycache__/
+*.py
+*.md
+*.xlsx
+*.pdf
+.DS_Store
+Thumbs.db
+~$*

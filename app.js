@@ -242,7 +242,7 @@ function play(src, onEnd) {
 function playSfx(id) {
   if (!id) return;
   try {
-    const a = new Audio("assets/Audio/" + id + "." + AUDIO_EXT);
+    const a = new Audio("assets/VO/" + id + "." + AUDIO_EXT);
     a.volume = 0.7;
     a.play().catch(() => {});
   } catch (e) {}
@@ -512,7 +512,7 @@ function confettiCannon() {
      pieces over the whole window, sized with the stage. The kit makes no sound; the game's burst sound
      plays with it, as before. */
   try {
-    const audio = new Audio('assets/Audio/reference_sfx_burst.wav');
+    const audio = new Audio(AssetLoader.url('assets/SFX/sfx_burst.wav'));
     audio.volume = .7;
     audio.play().catch(() => {});
   } catch (_) {}
@@ -606,7 +606,7 @@ function btCraneMeet(host, slide) {
         plot.appendChild(t);
       }
       burstStars();
-      play("assets/Audio/vo_total_" + N + "." + AUDIO_EXT, () =>
+      play("assets/VO/vo_total_" + N + "." + AUDIO_EXT, () =>
         setNavActive(true),
       );
       return;
@@ -621,7 +621,7 @@ function btCraneMeet(host, slide) {
     }
     btThunk(i);
     btDust(plot);
-    play("assets/Audio/vo_num_" + i + "." + AUDIO_EXT, () =>
+    play("assets/VO/vo_num_" + i + "." + AUDIO_EXT, () =>
       setTimeout(step, 340),
     );
   };
@@ -631,7 +631,7 @@ function btCraneMeet(host, slide) {
 }
 /* slide audio path: per slide, we look at slide.audio.prompt / .phoneme / etc.
    In this v0.1 the embedded card holds short ids; the compiler would replace
-   them with base64 data URIs. We resolve to assets/Audio/{id}.ogg with fallback. */
+   them with base64 data URIs. We resolve to assets/VO/{id}.wav with fallback. */
 function audioFor(slide, key) {
   if (!slide.audio || !slide.audio[key]) return null;
   return audioAsset(slide.audio[key]);
@@ -692,7 +692,7 @@ function lessonAssetUrls() {
   ["sw_head_talking", "sw_head_celebrate_anim", "sw_head_hint_anim", "sw_head_tryagain_anim", "peeking_talk_up", "nudge_tap", "mascot"]
     .forEach((k) => out.add("assets/UI/" + k + ".webp"));
   ["last_swifty_happy", "last_swifty_shabaash", "last_swifty_talk"].forEach((k) => out.add("assets/Images/" + k + ".webp"));
-  out.add("assets/Audio/reference_sfx_burst.wav");
+  out.add("assets/SFX/sfx_burst.wav"); out.add("assets/SFX/sfx_celebrate.wav");
   return [...out];
 }
 /* Review 1: every correct answer ends on "शाबाश!" with the confetti burst landing on it (reference
@@ -703,7 +703,7 @@ function playShabash(cb) {
 }
 function audioAsset(id) {
   return AssetLoader.url((CARD.assets && CARD.assets.audio && CARD.assets.audio[id]) ||
-    "assets/Audio/" + id + "." + AUDIO_EXT);
+    "assets/VO/" + id + "." + AUDIO_EXT);
 }
 /* audioText(slide,key): the exact Hindi line the VO for this slot speaks, so a
    popup can SHOW what it SAYS (shown == spoken). Looks up the build-injected
@@ -1502,7 +1502,7 @@ function demoCount(items, numerals, onDone) {
       o.appendChild(cal);
     }
     cal.textContent = String(i + 1); // Arabic count callout; Hindi number-word is spoken separately
-    play("assets/Audio/vo_num_" + (i + 1) + "." + AUDIO_EXT, () => {
+    play("assets/VO/vo_num_" + (i + 1) + "." + AUDIO_EXT, () => {
       i++;
       setTimeout(step, 320);
     });
@@ -2637,7 +2637,7 @@ const SlideModules = {
         tile.onclick = () => {
           tile.classList.add("played");
           const phon = slide.data.phonemes && slide.data.phonemes[L];
-          play(phon ? "assets/Audio/" + phon + "." + AUDIO_EXT : null);
+          play(phon ? "assets/VO/" + phon + "." + AUDIO_EXT : null);
           SwiftPAL.emit("intro_letter_tap", { slide_id: slide.id, letter: L });
           tapped.add(L);
           // नav unlocks only after EVERY letter has been heard
@@ -2742,7 +2742,7 @@ const SlideModules = {
           tile.classList.add("played");
           play(
             sh.name_audio
-              ? "assets/Audio/" + sh.name_audio + "." + AUDIO_EXT
+              ? "assets/VO/" + sh.name_audio + "." + AUDIO_EXT
               : null,
           );
           SwiftPAL.emit("intro_shape_tap", {
@@ -2985,17 +2985,17 @@ const SlideModules = {
               latency_ms: Date.now() - state.slideStart,
             });
             // say the LAST number, then the total; enable आगे ONLY after "कुल N" finishes
-            play("assets/Audio/vo_num_" + c + "." + AUDIO_EXT, () =>
+            play("assets/VO/vo_num_" + c + "." + AUDIO_EXT, () =>
               setTimeout(
                 () =>
-                  play("assets/Audio/vo_total_" + N + "." + AUDIO_EXT, () =>
+                  play("assets/VO/vo_total_" + N + "." + AUDIO_EXT, () =>
                     setNavActive(true),
                   ),
                 300,
               ),
             );
           } else {
-            play("assets/Audio/vo_num_" + c + "." + AUDIO_EXT); // one number word per touch
+            play("assets/VO/vo_num_" + c + "." + AUDIO_EXT); // one number word per touch
             nudgeNext();
           }
         };
@@ -3105,7 +3105,7 @@ const SlideModules = {
         } // cap at 5
         c++;
         makeItem();
-        play("assets/Audio/vo_num_" + c + "." + AUDIO_EXT); // count up as you add
+        play("assets/VO/vo_num_" + c + "." + AUDIO_EXT); // count up as you add
         SwiftPAL.emit("make_set_add", { slide_id: slide.id, count: c });
         refreshNav();
       };
@@ -3140,7 +3140,7 @@ const SlideModules = {
             attempts: state.attempts + 1,
             latency_ms: Date.now() - state.slideStart,
           });
-          play("assets/Audio/vo_total_" + N + "." + AUDIO_EXT, () =>
+          play("assets/VO/vo_total_" + N + "." + AUDIO_EXT, () =>
             celebrateThenAdvance(slide, false),
           ); // standard: confetti + VO + auto-advance, no popup
           return;
@@ -3174,7 +3174,7 @@ const SlideModules = {
           // count the (now-correct) set 1..N, then say the total "कुल N", then advance
           demoCount([...frame.querySelectorAll(".ms-item")], numerals, () => {
             state.hintActive = false;
-            play("assets/Audio/vo_total_" + N + "." + AUDIO_EXT, () =>
+            play("assets/VO/vo_total_" + N + "." + AUDIO_EXT, () =>
               setTimeout(() => completeSlide(false), 500),
             );
           });
@@ -3314,7 +3314,7 @@ const SlideModules = {
               o.appendChild(cal);
             }
             cal.textContent = n;
-            play("assets/Audio/vo_num_" + n + "." + AUDIO_EXT, () => {});
+            play("assets/VO/vo_num_" + n + "." + AUDIO_EXT, () => {});
             if (items.every((x) => x.classList.contains("counted"))) {
               stopNudge();
               setTimeout(cb, 550);
@@ -3472,7 +3472,7 @@ const SlideModules = {
         // last count, the "बराबर" VO follows (check runs in the count's onEnd so the number isn't cut).
         if (right <= L)
           play(
-            "assets/Audio/vo_num_" + right + "." + AUDIO_EXT,
+            "assets/VO/vo_num_" + right + "." + AUDIO_EXT,
             right === L ? () => check() : () => {},
           );
         else check(); // overshoot → "एक हटाओ" hint
@@ -3768,7 +3768,7 @@ const SlideModules = {
       const addSound = () => {
         btThunk(count);
         btDust(plot);
-        play("assets/Audio/vo_num_" + count + "." + AUDIO_EXT);
+        play("assets/VO/vo_num_" + count + "." + AUDIO_EXT);
       };
 
       function success() {
@@ -3796,7 +3796,7 @@ const SlideModules = {
           attempts: state.attempts + 1,
           latency_ms: Date.now() - state.slideStart,
         });
-        play("assets/Audio/vo_total_" + N + "." + AUDIO_EXT);
+        play("assets/VO/vo_total_" + N + "." + AUDIO_EXT);
         setNavActive(true);
       }
 
@@ -3932,7 +3932,7 @@ const SlideModules = {
           }
           sfxCorrect();
           burstStars();
-          play("assets/Audio/vo_total_" + N + "." + AUDIO_EXT);
+          play("assets/VO/vo_total_" + N + "." + AUDIO_EXT);
           SwiftPAL.emit("make_number_correct", {
             slide_id: slide.id,
             phase: slide.phase,
@@ -4115,8 +4115,8 @@ const SlideModules = {
           card.classList.add("played");
           playChain(
             [
-              "assets/Audio/" + cat.label_audio + "." + AUDIO_EXT,
-              "assets/Audio/" + cat.name_audio + "." + AUDIO_EXT,
+              "assets/VO/" + cat.label_audio + "." + AUDIO_EXT,
+              "assets/VO/" + cat.name_audio + "." + AUDIO_EXT,
             ],
             0,
           );
@@ -4198,7 +4198,7 @@ const SlideModules = {
           () => {},
         );
       const clip = (item) =>
-        item.audio ? "assets/Audio/" + item.audio + "." + AUDIO_EXT : null;
+        item.audio ? "assets/VO/" + item.audio + "." + AUDIO_EXT : null;
       const cards = [
         [mCard, d.masc],
         [fCard, d.fem],
@@ -4882,7 +4882,7 @@ const SlideModules = {
         chip.onclick = () => {
           chip.classList.add("said");
           state.audioReplays++;
-          if (w.audio) play("assets/Audio/" + w.audio + "." + AUDIO_EXT);
+          if (w.audio) play("assets/VO/" + w.audio + "." + AUDIO_EXT);
         };
         strip.appendChild(chip);
       });
@@ -4890,7 +4890,7 @@ const SlideModules = {
       readBtn.className = "read-whole-btn";
       readBtn.innerHTML = `🔊 पूरा पढ़िए`;
       const wholeSrc = d.whole_audio
-        ? "assets/Audio/" + d.whole_audio + "." + AUDIO_EXT
+        ? "assets/VO/" + d.whole_audio + "." + AUDIO_EXT
         : null;
       readBtn.onclick = () => {
         if (readBtn.classList.contains("playing")) return;
@@ -5439,7 +5439,7 @@ const SlideModules = {
           `<div class="rc-ic">${c.kind === "inference" ? "🔍" : "📖"}</div><div class="rc-title">${c.title_hi || ""}</div>` +
           `<div class="rc-body">${c.body_hi || ""}</div>` +
           (c.example_hi ? `<div class="rc-ex">${c.example_hi}</div>` : "");
-        el._src = c.audio ? "assets/Audio/" + c.audio + "." + AUDIO_EXT : null;
+        el._src = c.audio ? "assets/VO/" + c.audio + "." + AUDIO_EXT : null;
         el.onclick = () => {
           state.audioReplays++;
           play(el._src);
@@ -5515,7 +5515,7 @@ const SlideModules = {
         t.className = "ev-sort-item";
         t.dataset.kind = it.kind;
         t.innerHTML = `<span class="esi-text">${it.text}</span>`;
-        t._src = it.audio ? "assets/Audio/" + it.audio + "." + AUDIO_EXT : null;
+        t._src = it.audio ? "assets/VO/" + it.audio + "." + AUDIO_EXT : null;
         const speak = () => {
           if (
             t.classList.contains("snapped") ||
@@ -5773,7 +5773,7 @@ const SlideModules = {
       sw("happy");
       capTimer = setTimeout(speak, 1800);
       try {
-        jingle = new Audio("assets/Audio/sfx_celebrate.wav");
+        jingle = new Audio(AssetLoader.url("assets/SFX/sfx_celebrate.wav"));
         jingle.volume = 0.7;
         jingle.onended = speak;
         jingle.onerror = speak;
@@ -5851,7 +5851,7 @@ const SlideModules = {
         if (w.audio)
           c.onclick = () => {
             state.audioReplays++;
-            play("assets/Audio/" + w.audio + "." + AUDIO_EXT);
+            play("assets/VO/" + w.audio + "." + AUDIO_EXT);
           };
         return c;
       };
@@ -5891,7 +5891,7 @@ const SlideModules = {
       // 🔊 / stimulus tap replays both words back-to-back (re-hear the pair)
       const chain = [d.a, d.b]
         .filter((x) => x && x.audio)
-        .map((x) => "assets/Audio/" + x.audio + "." + AUDIO_EXT);
+        .map((x) => "assets/VO/" + x.audio + "." + AUDIO_EXT);
       stim.onclick = () => {
         state.audioReplays++;
         playChain(chain, 0);
@@ -5965,7 +5965,7 @@ const SlideModules = {
         chip.onclick = () => {
           chip.classList.add("said");
           state.audioReplays++;
-          if (w.audio) play("assets/Audio/" + w.audio + "." + AUDIO_EXT);
+          if (w.audio) play("assets/VO/" + w.audio + "." + AUDIO_EXT);
         };
         strip.appendChild(chip);
       });
@@ -5973,7 +5973,7 @@ const SlideModules = {
       readBtn.className = "read-whole-btn";
       readBtn.innerHTML = `🔊 पूरा पढ़ो`;
       const wholeSrc = d.whole_audio
-        ? "assets/Audio/" + d.whole_audio + "." + AUDIO_EXT
+        ? "assets/VO/" + d.whole_audio + "." + AUDIO_EXT
         : null;
       readBtn.onclick = () => {
         state.audioReplays++;
@@ -6017,7 +6017,7 @@ const SlideModules = {
         chip.innerHTML = `<span class="sw-text ink-glyph">${w.text}</span>`;
         chip.__target = w.target === true;
         const wordSrc = w.audio
-          ? "assets/Audio/" + w.audio + "." + AUDIO_EXT
+          ? "assets/VO/" + w.audio + "." + AUDIO_EXT
           : null;
         chip.onclick = () => {
           if (
@@ -6150,7 +6150,7 @@ const SlideModules = {
           imgOrEmoji(it.img, it.emoji, "img", "emoji") +
           `<span class="lbl">${it.word_hi}</span>`;
         const src = it.audio
-          ? "assets/Audio/" + it.audio + "." + AUDIO_EXT
+          ? "assets/VO/" + it.audio + "." + AUDIO_EXT
           : null;
         chip.onclick = () => {
           if (
@@ -6249,7 +6249,7 @@ const SlideModules = {
         strip.appendChild(chip);
       });
       const whole = d.whole_audio
-        ? "assets/Audio/" + d.whole_audio + "." + AUDIO_EXT
+        ? "assets/VO/" + d.whole_audio + "." + AUDIO_EXT
         : null;
       const spk = document.createElement("button");
       spk.className = "read-whole-btn";
@@ -6327,7 +6327,7 @@ const SlideModules = {
 
       const tapped = new Set();
       const boxSrc = (i) =>
-        "assets/Audio/" + d.boxes[i].audio + "." + AUDIO_EXT;
+        "assets/VO/" + d.boxes[i].audio + "." + AUDIO_EXT;
       function nudgeNext() {
         for (let i = 0; i < cells.length; i++) {
           if (!tapped.has(i)) {
@@ -6392,7 +6392,7 @@ const SlideModules = {
       b1.innerHTML = `<span class="mid-akshar ink-glyph">${d.first.akshar}</span>`;
       b1.onclick = () => {
         state.audioReplays++;
-        play("assets/Audio/" + d.first.audio + "." + AUDIO_EXT);
+        play("assets/VO/" + d.first.audio + "." + AUDIO_EXT);
       };
       // middle box (the unknown slot)
       const b2 = document.createElement("div");
@@ -6404,7 +6404,7 @@ const SlideModules = {
       b3.innerHTML = `<span class="mid-akshar ink-glyph">${d.last.akshar}</span>`;
       b3.onclick = () => {
         state.audioReplays++;
-        play("assets/Audio/" + d.last.audio + "." + AUDIO_EXT);
+        play("assets/VO/" + d.last.audio + "." + AUDIO_EXT);
       };
       boxes.appendChild(b1);
       boxes.appendChild(b2);
@@ -6993,7 +6993,7 @@ const SlideModules = {
         c.classList.add("tappable");
         c.onclick = () => {
           if (state.locked) return;
-          const src = "assets/Audio/" + c._it.audio + "." + AUDIO_EXT;
+          const src = "assets/VO/" + c._it.audio + "." + AUDIO_EXT;
           if (c.classList.contains("said")) {
             play(src);
             return;
@@ -7256,7 +7256,7 @@ const SlideModules = {
       tiles.forEach((t, i) => {
         t.onclick = () => {
           if (state.locked) return;
-          const src = "assets/Audio/" + aks[i].audio + "." + AUDIO_EXT;
+          const src = "assets/VO/" + aks[i].audio + "." + AUDIO_EXT;
           if (t.classList.contains("said")) {
             play(src);
             return;
@@ -7361,7 +7361,7 @@ const SlideModules = {
           renderDots();
           btThunk(i + 1);
           sfxTap();
-          play("assets/Audio/" + aks[i].audio + "." + AUDIO_EXT, () => {
+          play("assets/VO/" + aks[i].audio + "." + AUDIO_EXT, () => {
             i++;
             setTimeout(step, 260);
           });
@@ -7556,7 +7556,7 @@ const SlideModules = {
         t.onclick = () => {
           if (state.locked || blended) return;
           if (t.classList.contains("said")) {
-            play("assets/Audio/" + aks[i].audio + "." + AUDIO_EXT);
+            play("assets/VO/" + aks[i].audio + "." + AUDIO_EXT);
             return;
           }
           if (i !== next) {
@@ -7570,7 +7570,7 @@ const SlideModules = {
           btThunk(i + 1);
           setSwMood("point");
           next++;
-          play("assets/Audio/" + aks[i].audio + "." + AUDIO_EXT, () => {
+          play("assets/VO/" + aks[i].audio + "." + AUDIO_EXT, () => {
             if (next >= tiles.length) {
               blend.classList.add("ready");
               setSwMood("point");
@@ -8018,7 +8018,7 @@ function boot() {
   // landing VO and slide-0 VO could talk over each other.
   const landSrc =
     (CARD.assets && CARD.assets.audio && CARD.assets.audio["vo_landing"]) ||
-    "assets/Audio/vo_landing." + AUDIO_EXT;
+    "assets/VO/vo_landing." + AUDIO_EXT;
   /* Reference HI02H11 landing. Swiftie speaks first and the Play button waits for her: it appears only
      when the greeting has ACTUALLY been heard to its end AND every file of the lesson is downloaded (the
      loading bar stands where Play will appear). While she speaks the button is hidden (.sg-waiting -
