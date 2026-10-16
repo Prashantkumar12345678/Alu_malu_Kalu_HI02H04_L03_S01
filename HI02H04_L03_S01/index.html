@@ -2774,7 +2774,7 @@ function audioFor(slide, key) {
    blob: URL when the file is in, else the original path - so a file:// run (where fetch is refused) or a
    failed download just behaves as before. ready resolves when every file has settled (30s at most). */
 const AssetLoader = (() => {
-  const blobs = {}, listeners = [];
+  const blobs = {}, raw = {}, listeners = [];
   let total = 0, settled = 0, started = false, resolveReady;
   const ready = new Promise((r) => (resolveReady = r));
   const pct = () => (total ? Math.round((settled / total) * 100) : 100);
@@ -2782,12 +2782,15 @@ const AssetLoader = (() => {
   const fetchOne = (u) =>
     fetch(u)
       .then((r) => (r.ok ? r.blob() : null))
-      .then((b) => { if (b) blobs[u] = URL.createObjectURL(b); })
+      .then((b) => { if (b) { raw[u] = b; blobs[u] = URL.createObjectURL(b); } })
       .catch(() => {});
   return {
     ready,
     url: (src) => (src && blobs[src]) || src,
     has: (src) => !!blobs[src],
+    /* a NEW blob: URL of a preloaded file - an animated picture set to it plays again from frame 1,
+       straight from memory (no new download). null if the file is not in yet. */
+    fresh: (src) => (raw[src] ? URL.createObjectURL(raw[src]) : null),
     onProgress(f) { listeners.push(f); f(pct()); },
     /* first: fetched alone before the rest; list: everything else (deduped) */
     start(first, list) {
@@ -7892,7 +7895,13 @@ const SlideModules = {
         mascot.removeAttribute("src");
         void mascot.offsetWidth;
         window.__endSwN = (window.__endSwN || 0) + 1;
-        mascot.src = "assets/Images/last_swifty_" + name + ".webp?n=" + window.__endSwN;
+        // play the preloaded copy from memory (restarts from frame 1, no download); the ?n= URL only if
+        // the file has not finished preloading yet
+        const p = "assets/Images/last_swifty_" + name + ".webp";
+        const fresh = AssetLoader.fresh(p);
+        if (mascot._blobUrl) { try { URL.revokeObjectURL(mascot._blobUrl); } catch (e) {} }
+        mascot._blobUrl = fresh;
+        mascot.src = fresh || p + "?n=" + window.__endSwN;
       };
       const lineDone = () => {
         clearTimeout(talkTimer); clearTimeout(backTimer);
