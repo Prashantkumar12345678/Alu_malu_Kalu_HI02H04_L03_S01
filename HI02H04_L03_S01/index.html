@@ -1030,7 +1030,7 @@ body.is-end .stage-inner{visibility:hidden;}
 .story-read-layout .ev-credit,.story-read-layout .ev-pageno{position:static;left:auto;right:auto;bottom:auto;font-size:12px;color:#7A8BA8;}
 .story-read-layout .ev-line.ev-now{background:transparent;box-shadow:none;}
 .story-read-layout .ev-word{display:inline-block;transition:color .14s;}
-.story-read-layout .ev-word.ev-word-now{color:#F28C28;font-weight:800;}
+.story-read-layout .ev-word.ev-word-now{color:#F28C28;}
 .ev-pageno{position:absolute;right:6px;bottom:-4px;font-family:var(--font-hi);font-size:18px;font-weight:700;color:#7A8BA8;}
 /* question layout: passage | options */
 .ev-qa{flex:1;min-height:0;display:grid;grid-template-columns:540px minmax(0,1fr);gap:30px;align-items:center;width:100%;max-width:1060px;margin:0 auto;}
@@ -1357,7 +1357,7 @@ body.is-start .sg-mascot{transform:none;animation:none;}
 .read-with-mic .ev-passage.big .story-img{position:static;left:auto;top:auto;width:559px;max-width:100%;height:316px;object-fit:cover;border:0;border-radius:14px;outline:none;background:transparent;animation:none;transform:none;}
 .read-with-mic .ev-passage.big .story-caption{position:relative;left:auto;top:auto;flex:0 0 110px;display:flex;align-items:center;justify-content:center;width:539px;max-width:539px;height:110px;min-height:110px;max-height:110px;padding:10px 26px;border:3px solid #FFFFFF;border-radius:26px;background:#FFFFFF;box-shadow:0 5px 0 rgba(11,42,90,.10),0 10px 26px rgba(11,42,90,.12);font-size:26px;font-weight:600;line-height:42px;text-align:center;}
 .story-read-layout .ev-word{transition:color .15s ease,transform .15s ease;}
-.story-read-layout .ev-word.ev-word-now{color:#FF8A00;font-weight:800;transform:scale(1.10);}
+.story-read-layout .ev-word.ev-word-now{color:#FF8A00;transform:scale(1.10);}   /* colour + a visual swell only - no weight change, so the line never reflows */
 .stage.story-reading .reading-mic{left:auto;right:calc(100% + 15px);top:50%;margin-top:-32px;transform:none;bottom:auto;width:64px;height:64px;border:0;padding:0;background:transparent;border-radius:0;box-shadow:none;filter:drop-shadow(0 3px 6px rgba(0,0,0,.22));animation:none;}
 .stage.story-reading .reading-mic svg{display:block;width:100%;height:100%;overflow:visible;}
 .stage.story-reading .reading-mic:not(.p2-rec):not(.p2-rec-done):not(:disabled){animation:readingMicPulse 1.4s ease-in-out infinite;}
