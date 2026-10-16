@@ -1,9 +1,9 @@
-# Dev-side only - never needs to reach Vercel (same idea as the reference build's .vercelignore):
-# QA tooling and test captures, source recordings, safety backups, docs and sheets.
-_qa/
+# Only HI02H04_L03_S01/ is served (vercel.json outputDirectory). Everything below is dev-side and
+# never needs to reach Vercel: QA/build tooling, source masters, safety backups, docs.
+_tools/
 _masters/
 _backup/
-voiceovers/
+.vscode/
 **/__pycache__/
 *.py
 *.md

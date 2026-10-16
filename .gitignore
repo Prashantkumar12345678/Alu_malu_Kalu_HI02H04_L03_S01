@@ -1,6 +1,6 @@
-# Only the game itself is kept in git / deployed: index.html, app.js, style.css, confetti.*, assets/.
+# Only the game folder HI02H04_L03_S01/ (+ vercel.json) is kept in git and deployed.
 # Everything below is dev-side and stays on this machine.
-_qa/
+_tools/
 _backup/
 _masters/
 voiceovers/
