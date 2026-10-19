@@ -88,7 +88,7 @@
    "phase": "tutorial",
    "eis": "iconic",
    "type": "STORY_READALONG",
-   "prompt_hi": "कहानी पढ़िए",
+   "prompt_hi": "आइए कहानी पढ़ें।",
    "audio": {
     "prompt": "vo_review_reading_instruction"
    },
@@ -115,7 +115,7 @@
    "phase": "tutorial",
    "eis": "iconic",
    "type": "STORY_READALONG",
-   "prompt_hi": "कहानी पढ़िए",
+   "prompt_hi": "आइए कहानी पढ़ें।",
    "audio": {},
    "data": {
     "passage": {
@@ -140,7 +140,7 @@
    "phase": "tutorial",
    "eis": "iconic",
    "type": "STORY_READALONG",
-   "prompt_hi": "कहानी पढ़िए",
+   "prompt_hi": "आइए कहानी पढ़ें।",
    "audio": {},
    "data": {
     "passage": {
@@ -165,7 +165,7 @@
    "phase": "tutorial",
    "eis": "iconic",
    "type": "STORY_READALONG",
-   "prompt_hi": "कहानी पढ़िए",
+   "prompt_hi": "आइए कहानी पढ़ें।",
    "audio": {},
    "data": {
     "passage": {
@@ -190,7 +190,7 @@
    "phase": "tutorial",
    "eis": "iconic",
    "type": "STORY_READALONG",
-   "prompt_hi": "कहानी पढ़िए",
+   "prompt_hi": "आइए कहानी पढ़ें।",
    "audio": {},
    "data": {
     "passage": {
@@ -215,7 +215,7 @@
    "phase": "tutorial",
    "eis": "iconic",
    "type": "STORY_READALONG",
-   "prompt_hi": "कहानी पढ़िए",
+   "prompt_hi": "आइए कहानी पढ़ें।",
    "audio": {},
    "data": {
     "passage": {
@@ -240,7 +240,7 @@
    "phase": "tutorial",
    "eis": "iconic",
    "type": "STORY_READALONG",
-   "prompt_hi": "कहानी पढ़िए",
+   "prompt_hi": "आइए कहानी पढ़ें।",
    "audio": {},
    "data": {
     "passage": {
@@ -265,7 +265,7 @@
    "phase": "tutorial",
    "eis": "iconic",
    "type": "STORY_READALONG",
-   "prompt_hi": "कहानी पढ़िए",
+   "prompt_hi": "आइए कहानी पढ़ें।",
    "audio": {},
    "data": {
     "passage": {
@@ -292,7 +292,7 @@
    "phase": "tutorial",
    "eis": "iconic",
    "type": "STORY_READALONG",
-   "prompt_hi": "कहानी पढ़िए",
+   "prompt_hi": "आइए कहानी पढ़ें।",
    "audio": {},
    "data": {
     "passage": {
@@ -317,7 +317,7 @@
    "phase": "tutorial",
    "eis": "iconic",
    "type": "STORY_READALONG",
-   "prompt_hi": "कहानी पढ़िए",
+   "prompt_hi": "आइए कहानी पढ़ें।",
    "audio": {},
    "data": {
     "passage": {
@@ -801,16 +801,16 @@
        "evidence": [],
        "options": [
         {
-         "label_hi": "उसे भूख लगी थी",
+         "label_hi": "उसे भूख लगी थी।",
          "audio": "vo_o_t_bhookh"
         },
         {
-         "label_hi": "उसे आलू नहीं मिले थे",
+         "label_hi": "उसे आलू नहीं मिले थे।",
          "audio": "vo_o_t_nahi_mile_v2",
          "correct": true
         },
         {
-         "label_hi": "टोकरी टूट गई थी",
+         "label_hi": "टोकरी टूट गई थी।",
          "audio": "vo_o_t_tooti"
         }
        ],
@@ -914,16 +914,16 @@
        "evidence": [],
        "options": [
         {
-         "label_hi": "आलू मिट्टी में छिपे थे",
+         "label_hi": "आलू मिट्टी में छिपे थे।",
          "audio": "vo_o_t_chhipe",
          "correct": true
         },
         {
-         "label_hi": "मालू सो रहा था",
+         "label_hi": "मालू सो रहा था।",
          "audio": "vo_o_t_so_raha"
         },
         {
-         "label_hi": "बगीचे में अँधेरा था",
+         "label_hi": "बगीचे में अँधेरा था।",
          "audio": "vo_o_t_andhera"
         }
        ],
@@ -1093,7 +1093,8 @@
    "vo_o_t_nahi_mile_v2": "assets/VO/vo_o_t_nahi_mile_v2.wav?v=rec2",
    "vo_review_celebrate_v2": "assets/VO/vo_review_celebrate_v2.wav?v=rec2",
    "vo_shabash": "assets/VO/vo_shabash.wav?v=rec2",
-   "sfx_dog_bark": "assets/SFX/sfx_dog_bark.wav"
+   "sfx_dog_bark": "assets/SFX/sfx_dog_bark.wav",
+   "vo_story_idle_nudge": "assets/VO/vo_story_idle_nudge.wav?v=rec3"
   },
   "audio_text": {
    "vo_celebrate": "बहुत बढ़िया! तुमने कहानी पढ़ी, और सीधे और अनुमान वाले, दोनों तरह के प्रश्नों के उत्तर दिए।",
@@ -1261,7 +1262,8 @@
    "vo_o_t_nahi_mile_v2": "उसे आलू नहीं मिले थे",
    "vo_review_celebrate_v2": "बहुत बढ़िया, दोस्त! तुमने कमाल कर दिया!",
    "vo_shabash": "शाबाश!",
-   "sfx_dog_bark": "(SFX) बड़े कुत्ते की भौंक — भौं, भौं, भौं"
+   "sfx_dog_bark": "(SFX) बड़े कुत्ते की भौंक — भौं, भौं, भौं",
+   "vo_story_idle_nudge": "इस बटन पर टैप कीजिए और कहानी पढ़िए।"
   },
   "image": {
    "scene_1": "assets/Images/Cheerful Boy in the Vegetable Garden.webp",
