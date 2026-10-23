@@ -584,16 +584,16 @@
    "phase": "practice",
    "eis": "iconic",
    "type": "PHASE_TRANSITION",
-   "prompt_hi": "वाह! अब आपकी बारी।",
+   "prompt_hi": "अब आपकी बारी।",
    "audio": {
     "prompt": "vo_review_pt3"
    },
    "data": {
     "caption": {
-     "text": "वाह! अब आपकी बारी।",
-     "at_ms": 133
+     "text": "अब आपकी बारी।",
+     "at_ms": 1080
     },
-    "headline_hi": "वाह! अब आपकी बारी।",
+    "headline_hi": "अब आपकी बारी।",
     "icon": "⭐",
     "step": 3,
     "total_steps": 3,
@@ -873,7 +873,11 @@
        "highlight": false,
        "puzzle": true,
        "puzzle_image": "scene_7",
-       "hint1_question": true
+       "hint1_question": true,
+       "big_card": {
+        "wide": true,
+        "extra_top": 34
+       }
       },
       "signals": {
        "on_complete": []
@@ -938,7 +942,10 @@
        "walk_hint": true,
        "hint1_question": true,
        "silent_options": true,
-       "hint2_options_only": true
+       "hint2_options_only": true,
+       "big_card": {
+        "wide": true
+       }
       },
       "signals": {
        "on_complete": [
@@ -993,7 +1000,11 @@
        "walk_hint": true,
        "hint1_question": true,
        "silent_options": true,
-       "hint2_options_only": true
+       "hint2_options_only": true,
+       "big_card": {
+        "wide": true,
+        "extra_top": 34
+       }
       },
       "signals": {
        "on_complete": [
@@ -1070,7 +1081,7 @@
    "vo_review_basket_hint3": "assets/VO/vo_review_basket_hint3.wav?v=rec2",
    "vo_review_story_8a": "assets/VO/vo_review_story_8a.wav?v=rec4",
    "vo_review_story_8b": "assets/VO/vo_review_story_8b.wav?v=rec4",
-   "vo_review_puzzle_cards": "assets/VO/vo_review_puzzle_cards.wav?v=rec2",
+   "vo_review_puzzle_cards": "assets/VO/vo_review_puzzle_cards.wav?v=rec6",
    "vo_review_puzzle_assemble": "assets/VO/vo_review_puzzle_assemble.wav?v=rec2",
    "vo_fill_prompt": "assets/VO/vo_fill_prompt.wav?v=rec2",
    "vo_fill_answer": "assets/VO/vo_fill_answer.wav?v=rec2",
@@ -1094,7 +1105,8 @@
    "vo_review_celebrate_v2": "assets/VO/vo_review_celebrate_v2.wav?v=rec2",
    "vo_shabash": "assets/VO/vo_shabash.wav?v=rec2",
    "sfx_dog_bark": "assets/SFX/sfx_dog_bark.wav",
-   "vo_story_idle_nudge": "assets/VO/vo_story_idle_nudge.wav?v=rec3"
+   "vo_story_idle_nudge": "assets/VO/vo_story_idle_nudge.wav?v=rec3",
+   "vo_puzzle_complete": "assets/VO/vo_puzzle_complete.wav?v=rec3"
   },
   "audio_text": {
    "vo_celebrate": "बहुत बढ़िया! तुमने कहानी पढ़ी, और सीधे और अनुमान वाले, दोनों तरह के प्रश्नों के उत्तर दिए।",
@@ -1263,7 +1275,9 @@
    "vo_review_celebrate_v2": "बहुत बढ़िया, दोस्त! तुमने कमाल कर दिया!",
    "vo_shabash": "शाबाश!",
    "sfx_dog_bark": "(SFX) बड़े कुत्ते की भौंक — भौं, भौं, भौं",
-   "vo_story_idle_nudge": "इस बटन पर टैप कीजिए और कहानी पढ़िए।"
+   "vo_story_idle_nudge": "इस बटन पर टैप कीजिए और कहानी पढ़िए।",
+   "vo_puzzle_complete": "शाबाश! आपने सही चित्र बना लिया।",
+   "vo_review_puzzle_cards": "प्रश्नचिह्न पर टैप करके प्रश्नों के उत्तर दीजिए।"
   },
   "image": {
    "scene_1": "assets/Images/Cheerful Boy in the Vegetable Garden.webp",
@@ -1781,6 +1795,24 @@
      ]
     ]
    },
+   "vo_puzzle_complete": {
+    "s": 160,
+    "e": 3180,
+    "segs": [
+     [
+      160,
+      1060
+     ],
+     [
+      1440,
+      1860
+     ],
+     [
+      2020,
+      3180
+     ]
+    ]
+   },
    "vo_q_basket": {
     "s": 140,
     "e": 3220,
@@ -2109,31 +2141,15 @@
    },
    "vo_review_puzzle_cards": {
     "s": 140,
-    "e": 6900,
+    "e": 3360,
     "segs": [
      [
       140,
-      1300
-     ],
-     [
-      1440,
       1760
      ],
      [
-      2080,
+      2060,
       3360
-     ],
-     [
-      3900,
-      5220
-     ],
-     [
-      5360,
-      5660
-     ],
-     [
-      5960,
-      6900
      ]
     ]
    },
@@ -2237,15 +2253,15 @@
      ]
     ],
     "w": [
-     160,
-     1260,
-     1640,
-     2107,
-     2435,
-     2951,
-     3139,
-     3536,
-     4052
+     150,
+     1150,
+     1510,
+     2020,
+     2380,
+     2980,
+     3130,
+     3580,
+     4000
     ]
    },
    "vo_review_story_2": {
@@ -2274,16 +2290,16 @@
      ]
     ],
     "w": [
-     140,
-     628,
-     872,
-     1840,
-     2226,
-     3500,
-     3817,
-     4270,
-     5240,
-     5947
+     150,
+     610,
+     820,
+     1750,
+     2260,
+     3400,
+     3970,
+     4840,
+     5080,
+     5830
     ]
    },
    "vo_review_story_3": {
@@ -2313,16 +2329,16 @@
     ],
     "w": [
      180,
-     737,
-     1015,
-     2080,
-     3028,
-     4200,
-     4489,
-     5240,
-     5800,
-     6116,
-     6432
+     730,
+     940,
+     1960,
+     3130,
+     4120,
+     5110,
+     5680,
+     6160,
+     6340,
+     6580
     ]
    },
    "vo_review_story_4": {
@@ -2363,19 +2379,19 @@
      ]
     ],
     "w": [
-     160,
-     773,
-     1240,
-     1840,
-     2600,
-     3060,
-     3560,
-     4010,
-     5460,
-     6040,
-     6330,
-     6743,
-     7033
+     150,
+     670,
+     1000,
+     1690,
+     2530,
+     3460,
+     3730,
+     4210,
+     5350,
+     5920,
+     6280,
+     6700,
+     7000
     ]
    },
    "vo_review_story_5": {
@@ -2396,18 +2412,18 @@
      ]
     ],
     "w": [
-     160,
-     1360,
-     1793,
-     2226,
-     2659,
-     3091,
-     3900,
-     4342,
-     4563,
-     5005,
-     5611,
-     5939
+     180,
+     1240,
+     1780,
+     2140,
+     2530,
+     2920,
+     3790,
+     4270,
+     4480,
+     5200,
+     5620,
+     5920
     ]
    },
    "vo_review_story_6": {
@@ -2428,18 +2444,18 @@
      ]
     ],
     "w": [
-     160,
-     649,
-     894,
-     1820,
-     2337,
-     2581,
-     3071,
-     3920,
-     4425,
-     4821,
-     5157,
-     5553
+     150,
+     640,
+     820,
+     1750,
+     2350,
+     2530,
+     2920,
+     3820,
+     4570,
+     4960,
+     5110,
+     5440
     ]
    },
    "vo_review_story_7": {
@@ -2464,16 +2480,16 @@
      ]
     ],
     "w": [
-     160,
-     920,
-     1222,
-     1577,
-     2136,
-     3020,
-     4120,
-     4486,
-     4670,
-     4941
+     150,
+     730,
+     1060,
+     1510,
+     2140,
+     2890,
+     4000,
+     4450,
+     4630,
+     4900
     ]
    },
    "vo_review_story_8a": {
@@ -2495,14 +2511,14 @@
     ],
     "w": [
      180,
-     1460,
-     1891,
-     2322,
-     2752,
-     3480,
-     3639,
-     4013,
-     4546
+     1360,
+     1900,
+     2320,
+     2650,
+     3310,
+     3520,
+     3880,
+     4480
     ]
    },
    "vo_review_story_8b": {
@@ -2523,17 +2539,17 @@
      ]
     ],
     "w": [
-     160,
-     528,
-     712,
-     1260,
-     1751,
-     2115,
-     2860,
-     3432,
-     3663,
-     4236,
-     5158
+     150,
+     550,
+     850,
+     1330,
+     1750,
+     2020,
+     2770,
+     3220,
+     3400,
+     3910,
+     5020
     ]
    },
    "vo_review_story_9": {
@@ -2558,15 +2574,15 @@
      ]
     ],
     "w": [
-     140,
-     640,
-     1400,
-     1786,
-     2394,
-     3300,
-     3808,
-     4358,
-     4729
+     180,
+     520,
+     1330,
+     1720,
+     2290,
+     3190,
+     3700,
+     4180,
+     4600
     ]
    },
    "vo_review_vegetable_hint1": {
