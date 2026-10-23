@@ -1472,7 +1472,8 @@ body.is-start .sg-mascot{transform:none;animation:none;}
 .stage.story-reading .prompt-band .prompt-text{font-size:33.3px;line-height:1.15;font-weight:700;color:#012F76;letter-spacing:0;}
 .stage.story-reading .sw-buddy{display:block;left:31px;top:23px;bottom:auto;width:121px;height:125px;box-sizing:border-box;border:5px solid #FDF9E9;border-radius:50%;background:#61D0FE;overflow:hidden;box-shadow:none;filter:drop-shadow(0 4px 2px rgba(0,0,0,.25));z-index:42;animation:none;}
 .stage.story-reading .sw-buddy img{width:100%;height:100%;object-fit:cover;}
-.stage.story-reading .audio-chip{display:none !important;}
+/* story pages: the header speaker, placed on Swiftie's lower-right exactly as on the question pages */
+.stage.story-reading .audio-chip{display:flex !important;left:110px;top:86px;bottom:auto;width:66px;height:66px;z-index:44;}
 .stage.story-reading .slide-stage{padding:0;overflow:visible;}
 .read-with-mic{display:block;}
 .read-with-mic .reading-prompt{display:none;}
@@ -1733,12 +1734,13 @@ body.is-start .sg-mascot{transform:none;animation:none;}
 .ev-qa.image-above-options .opt-cell,.stage.thm-toybox .ev-qa.image-above-options .opt-cell,
 .qp-options .opt-cell,.stage.thm-toybox .qp-options .opt-cell,
 .qp-big .qp-options .opt-cell,.stage.thm-toybox .qp-big .qp-options .opt-cell{
-  border:2px solid #DCD5C6;border-radius:28px;background:#FFFDF7;box-shadow:0 10px 22px rgba(214,140,20,.18);outline:none;}
+  border:3px solid #DADBDF;border-radius:28px;background:#FFFFFF;box-shadow:0 7px 0 #D3D4D8;outline:none;}   /* white card, grey rim + a thicker grey ledge underneath (review) */
 .qp-big .qp-options .opt-cell:not(.correct){outline:none;}
-.qp-options .opt-cell:hover,.qp-big .qp-options .opt-cell:hover{box-shadow:0 12px 24px rgba(214,140,20,.22);}
-.qp-options .opt-cell:active,.qp-big .qp-options .opt-cell:active{box-shadow:0 6px 14px rgba(214,140,20,.18);}
+.qp-options .opt-cell:hover,.qp-big .qp-options .opt-cell:hover{box-shadow:0 7px 0 #D3D4D8;}
+.qp-options .opt-cell:active,.qp-big .qp-options .opt-cell:active{box-shadow:0 3px 0 #D3D4D8;}
 .ev-qa.image-above-options .opt-cell.correct,.qp-options .opt-cell.correct,.qp-big .qp-options .opt-cell.correct,
-.stage.thm-toybox .qp-big .qp-options .opt-cell.correct{border-color:var(--correct);box-shadow:0 10px 22px rgba(0,177,50,.18);}
+.stage.thm-toybox .qp-big .qp-options .opt-cell.correct,.stage.thm-toybox .ev-qa.image-above-options .opt-cell.correct,
+.stage.thm-toybox .qp-options .opt-cell.correct{border-color:var(--correct);box-shadow:0 7px 0 #00962A;}   /* right answer: green rim + green ledge */
 .ev-qa.image-above-options .opt-cell.faded,.qp-options .opt-cell.faded,.qp-big .qp-options .opt-cell.faded{box-shadow:none;}
 /* QUESTION BOX in an open puzzle piece: kept as chosen - dark-blue box, white text, 14px corners, no
    border, no shadow (the reference card style is NOT applied here) */
@@ -4719,6 +4721,7 @@ function mountReadingPractice(host, slide) {
     const done=()=>{
       if(!current())return;
       mode="done";setNavActive(true);
+      $("navBtn").classList.add("nav-pulse"); // story VO finished: आगे pulses right away (page 1 also gets the hand after 7 s)
     };
     // data.sfx_after: a sound effect that follows the narrated sentence (e.g. the puppy's भौं-भौं on page 8).
     // data.sfx_words: how many trailing words the SFX "says" — the VO highlights the rest, the SFX lights these.
@@ -4747,7 +4750,12 @@ function mountReadingPractice(host, slide) {
     timer=setTimeout(narrate,12000);
   };
   state.ownsAudio=true;
-  state.replayAudio=()=>{if(mode!=="reading")narrate();};
+  // header speaker: before reading it repeats the instruction (page 1's own, else the "tap this button" line);
+  // once the page is read it reads the sentence again. Never while the child is reading.
+  state.replayAudio=()=>{
+    if(mode==="ready"){clearTimeout(idleT);play(audioFor(slide,"prompt")||audioAsset("vo_story_idle_nudge"),armIdle);}
+    else if(mode==="done")narrate();
+  };
   $("navBtn").onclick=()=>{
     if(!$("navBtn").disabled && !isPlaying && current())completeSlide(true);
   };
