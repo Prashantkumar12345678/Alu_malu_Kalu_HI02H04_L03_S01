@@ -1062,13 +1062,13 @@
    "vo_review_pt2": "assets/VO/vo_review_pt2.wav?v=rec2",
    "vo_review_pt3": "assets/VO/vo_review_pt3.wav?v=rec2",
    "vo_review_reading_instruction": "assets/VO/vo_review_reading_instruction.wav?v=rec2",
-   "vo_review_story_1": "assets/VO/vo_review_story_1.wav?v=rec7",
+   "vo_review_story_1": "assets/VO/vo_review_story_1.wav?v=rec9",
    "vo_review_story_2": "assets/VO/vo_review_story_2.wav?v=rec4",
-   "vo_review_story_3": "assets/VO/vo_review_story_3.wav?v=rec7",
-   "vo_review_story_4": "assets/VO/vo_review_story_4.wav?v=rec7",
-   "vo_review_story_5": "assets/VO/vo_review_story_5.wav?v=rec7",
-   "vo_review_story_6": "assets/VO/vo_review_story_6.wav?v=rec4",
-   "vo_review_story_7": "assets/VO/vo_review_story_7.wav?v=rec4",
+   "vo_review_story_3": "assets/VO/vo_review_story_3.wav?v=rec9",
+   "vo_review_story_4": "assets/VO/vo_review_story_4.wav?v=rec9",
+   "vo_review_story_5": "assets/VO/vo_review_story_5.wav?v=rec9",
+   "vo_review_story_6": "assets/VO/vo_review_story_6.wav?v=rec9",
+   "vo_review_story_7": "assets/VO/vo_review_story_7.wav?v=rec9",
    "vo_review_story_9": "assets/VO/vo_review_story_9.wav?v=rec4",
    "vo_review_identify": "assets/VO/vo_review_identify.wav?v=rec2",
    "vo_review_identify_hint1": "assets/VO/vo_review_identify_hint1.wav?v=rec2",
@@ -1079,8 +1079,8 @@
    "vo_review_soil_hint3": "assets/VO/vo_review_soil_hint3.wav?v=rec2",
    "vo_review_sad_hint3": "assets/VO/vo_review_sad_hint3.wav?v=rec2",
    "vo_review_basket_hint3": "assets/VO/vo_review_basket_hint3.wav?v=rec2",
-   "vo_review_story_8a": "assets/VO/vo_review_story_8a.wav?v=rec7",
-   "vo_review_story_8b": "assets/VO/vo_review_story_8b.wav?v=rec4",
+   "vo_review_story_8a": "assets/VO/vo_review_story_8a.wav?v=rec9",
+   "vo_review_story_8b": "assets/VO/vo_review_story_8b.wav?v=rec9",
    "vo_review_puzzle_cards": "assets/VO/vo_review_puzzle_cards.wav?v=rec6",
    "vo_review_puzzle_assemble": "assets/VO/vo_review_puzzle_assemble.wav?v=rec2",
    "vo_fill_prompt": "assets/VO/vo_fill_prompt.wav?v=rec2",
@@ -2237,27 +2237,27 @@
    },
    "vo_review_story_1": {
     "s": 140,
-    "e": 4080,
+    "e": 3800,
     "segs": [
      [
       140,
-      780
+      720
      ],
      [
-      1160,
-      4080
+      1100,
+      3800
      ]
     ],
     "w": [
      150,
-     1060,
-     1420,
-     1870,
-     2200,
-     2770,
-     2920,
-     3340,
-     3730
+     1000,
+     1330,
+     1750,
+     2050,
+     2560,
+     2710,
+     3100,
+     3460
     ]
    },
    "vo_review_story_2": {
@@ -2299,253 +2299,253 @@
     ]
    },
    "vo_review_story_3": {
-    "s": 160,
-    "e": 6380,
+    "s": 140,
+    "e": 5320,
     "segs": [
      [
-      160,
-      1380
+      140,
+      1160
      ],
      [
-      1920,
-      3440
+      1600,
+      2860
      ],
      [
-      3880,
-      4460
+      3240,
+      3720
      ],
      [
-      4840,
-      5200
+      4040,
+      4320
      ],
      [
-      5340,
-      6380
+      4460,
+      5320
      ]
     ],
     "w": [
-     180,
-     670,
-     880,
-     1810,
-     2860,
-     3820,
+     150,
+     550,
+     700,
+     1480,
+     2380,
+     3160,
+     3910,
+     4330,
      4720,
-     5230,
-     5680,
-     5860,
-     6070
+     4870,
+     5050
     ]
    },
    "vo_review_story_4": {
     "s": 140,
-    "e": 6760,
+    "e": 6160,
     "segs": [
      [
       140,
-      1000
+      900
      ],
      [
-      1140,
-      1560
+      1060,
+      1420
      ],
      [
-      1700,
-      2180
+      1560,
+      1980
      ],
      [
-      2420,
-      3160
+      2200,
+      2860
      ],
      [
-      3300,
-      4140
+      3000,
+      3760
      ],
      [
-      4300,
-      4380
+      3920,
+      3980
      ],
      [
-      5060,
-      5460
+      4600,
+      4960
      ],
      [
-      5600,
-      6760
+      5100,
+      6160
+     ]
+    ],
+    "w": [
+     150,
+     520,
+     820,
+     1420,
+     2110,
+     2890,
+     3100,
+     3550,
+     4510,
+     4960,
+     5260,
+     5620,
+     5890
+    ]
+   },
+   "vo_review_story_5": {
+    "s": 140,
+    "e": 5380,
+    "segs": [
+     [
+      140,
+      800
+     ],
+     [
+      1180,
+      2900
+     ],
+     [
+      3400,
+      5380
+     ]
+    ],
+    "w": [
+     150,
+     1090,
+     1510,
+     1870,
+     2200,
+     2530,
+     3310,
+     3700,
+     3910,
+     4480,
+     4900,
+     5140
+    ]
+   },
+   "vo_review_story_6": {
+    "s": 140,
+    "e": 5000,
+    "segs": [
+     [
+      140,
+      1140
+     ],
+     [
+      1580,
+      3080
+     ],
+     [
+      3400,
+      5000
+     ]
+    ],
+    "w": [
+     150,
+     550,
+     700,
+     1510,
+     2020,
+     2170,
+     2530,
+     3310,
+     3970,
+     4270,
+     4450,
+     4720
+    ]
+   },
+   "vo_review_story_7": {
+    "s": 140,
+    "e": 4460,
+    "segs": [
+     [
+      140,
+      620
+     ],
+     [
+      780,
+      2000
+     ],
+     [
+      2560,
+      3320
+     ],
+     [
+      3500,
+      4460
      ]
     ],
     "w": [
      150,
      610,
      910,
-     1570,
-     2320,
-     3190,
-     3460,
+     1270,
+     1810,
+     2440,
+     3370,
+     3760,
      3910,
-     4960,
-     5470,
-     5800,
-     6190,
-     6460
-    ]
-   },
-   "vo_review_story_5": {
-    "s": 140,
-    "e": 5760,
-    "segs": [
-     [
-      140,
-      860
-     ],
-     [
-      1260,
-      3120
-     ],
-     [
-      3620,
-      5760
-     ]
-    ],
-    "w": [
-     150,
-     1150,
-     1630,
-     1990,
-     2350,
-     2710,
-     3520,
-     3970,
-     4180,
-     4810,
-     5260,
-     5500
-    ]
-   },
-   "vo_review_story_6": {
-    "s": 160,
-    "e": 5780,
-    "segs": [
-     [
-      160,
-      1320
-     ],
-     [
-      1820,
-      3560
-     ],
-     [
-      3920,
-      5780
-     ]
-    ],
-    "w": [
-     150,
-     640,
-     820,
-     1750,
-     2350,
-     2530,
-     2920,
-     3820,
-     4570,
-     4960,
-     5110,
-     5440
-    ]
-   },
-   "vo_review_story_7": {
-    "s": 160,
-    "e": 5260,
-    "segs": [
-     [
-      160,
-      740
-     ],
-     [
-      920,
-      2340
-     ],
-     [
-      3020,
-      3920
-     ],
-     [
-      4120,
-      5260
-     ]
-    ],
-    "w": [
-     150,
-     730,
-     1060,
-     1510,
-     2140,
-     2890,
-     4000,
-     4450,
-     4630,
-     4900
+     4150
     ]
    },
    "vo_review_story_8a": {
-    "s": 160,
-    "e": 4540,
+    "s": 140,
+    "e": 3780,
     "segs": [
      [
-      160,
-      860
+      140,
+      700
      ],
      [
-      1360,
-      2760
+      1140,
+      2300
      ],
      [
-      3200,
-      4540
-     ]
-    ],
-    "w": [
-     180,
-     1240,
-     1720,
-     2110,
-     2440,
-     3070,
-     3250,
-     3580,
-     4120
-    ]
-   },
-   "vo_review_story_8b": {
-    "s": 160,
-    "e": 5560,
-    "segs": [
-     [
-      160,
-      1100
-     ],
-     [
-      1260,
-      2360
-     ],
-     [
-      2860,
-      5560
+      2680,
+      3780
      ]
     ],
     "w": [
      150,
-     550,
-     850,
-     1330,
+     1030,
+     1420,
      1750,
      2020,
-     2770,
-     3220,
-     3400,
-     3910,
-     5020
+     2530,
+     2710,
+     2980,
+     3430
+    ]
+   },
+   "vo_review_story_8b": {
+    "s": 140,
+    "e": 4760,
+    "segs": [
+     [
+      140,
+      940
+     ],
+     [
+      1080,
+      2020
+     ],
+     [
+      2460,
+      4760
+     ]
+    ],
+    "w": [
+     150,
+     460,
+     670,
+     1120,
+     1480,
+     1720,
+     2350,
+     2740,
+     2920,
+     3340,
+     4270
     ]
    },
    "vo_review_story_9": {
