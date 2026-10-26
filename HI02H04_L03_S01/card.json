@@ -1062,11 +1062,11 @@
    "vo_review_pt2": "assets/VO/vo_review_pt2.wav?v=rec2",
    "vo_review_pt3": "assets/VO/vo_review_pt3.wav?v=rec2",
    "vo_review_reading_instruction": "assets/VO/vo_review_reading_instruction.wav?v=rec2",
-   "vo_review_story_1": "assets/VO/vo_review_story_1.wav?v=rec4",
+   "vo_review_story_1": "assets/VO/vo_review_story_1.wav?v=rec7",
    "vo_review_story_2": "assets/VO/vo_review_story_2.wav?v=rec4",
-   "vo_review_story_3": "assets/VO/vo_review_story_3.wav?v=rec5",
-   "vo_review_story_4": "assets/VO/vo_review_story_4.wav?v=rec4",
-   "vo_review_story_5": "assets/VO/vo_review_story_5.wav?v=rec4",
+   "vo_review_story_3": "assets/VO/vo_review_story_3.wav?v=rec7",
+   "vo_review_story_4": "assets/VO/vo_review_story_4.wav?v=rec7",
+   "vo_review_story_5": "assets/VO/vo_review_story_5.wav?v=rec7",
    "vo_review_story_6": "assets/VO/vo_review_story_6.wav?v=rec4",
    "vo_review_story_7": "assets/VO/vo_review_story_7.wav?v=rec4",
    "vo_review_story_9": "assets/VO/vo_review_story_9.wav?v=rec4",
@@ -1079,7 +1079,7 @@
    "vo_review_soil_hint3": "assets/VO/vo_review_soil_hint3.wav?v=rec2",
    "vo_review_sad_hint3": "assets/VO/vo_review_sad_hint3.wav?v=rec2",
    "vo_review_basket_hint3": "assets/VO/vo_review_basket_hint3.wav?v=rec2",
-   "vo_review_story_8a": "assets/VO/vo_review_story_8a.wav?v=rec4",
+   "vo_review_story_8a": "assets/VO/vo_review_story_8a.wav?v=rec7",
    "vo_review_story_8b": "assets/VO/vo_review_story_8b.wav?v=rec4",
    "vo_review_puzzle_cards": "assets/VO/vo_review_puzzle_cards.wav?v=rec6",
    "vo_review_puzzle_assemble": "assets/VO/vo_review_puzzle_assemble.wav?v=rec2",
@@ -2236,32 +2236,28 @@
     ]
    },
    "vo_review_story_1": {
-    "s": 160,
-    "e": 4380,
+    "s": 140,
+    "e": 4080,
     "segs": [
      [
-      160,
-      840
+      140,
+      780
      ],
      [
-      1260,
-      1500
-     ],
-     [
-      1640,
-      4380
+      1160,
+      4080
      ]
     ],
     "w": [
      150,
-     1150,
-     1510,
-     2020,
-     2380,
-     2980,
-     3130,
-     3580,
-     4000
+     1060,
+     1420,
+     1870,
+     2200,
+     2770,
+     2920,
+     3340,
+     3730
     ]
    },
    "vo_review_story_2": {
@@ -2303,127 +2299,127 @@
     ]
    },
    "vo_review_story_3": {
-    "s": 180,
-    "e": 6900,
+    "s": 160,
+    "e": 6380,
     "segs": [
      [
-      180,
-      1500
+      160,
+      1380
      ],
      [
-      2080,
-      3720
+      1920,
+      3440
      ],
      [
-      4200,
-      4820
+      3880,
+      4460
      ],
      [
-      5240,
-      5620
+      4840,
+      5200
      ],
      [
-      5800,
-      6900
+      5340,
+      6380
      ]
     ],
     "w": [
      180,
-     730,
-     940,
-     1960,
-     3130,
-     4120,
-     5110,
+     670,
+     880,
+     1810,
+     2860,
+     3820,
+     4720,
+     5230,
      5680,
-     6160,
-     6340,
-     6580
+     5860,
+     6070
     ]
    },
    "vo_review_story_4": {
-    "s": 160,
-    "e": 7280,
+    "s": 140,
+    "e": 6760,
     "segs": [
      [
-      160,
-      1080
+      140,
+      1000
      ],
      [
-      1240,
-      1680
+      1140,
+      1560
      ],
      [
-      1840,
-      2360
+      1700,
+      2180
      ],
      [
-      2600,
-      3400
+      2420,
+      3160
      ],
      [
-      3560,
-      4460
+      3300,
+      4140
      ],
      [
-      4640,
-      4740
+      4300,
+      4380
      ],
      [
-      5460,
-      5900
+      5060,
+      5460
      ],
      [
-      6040,
-      7280
+      5600,
+      6760
      ]
     ],
     "w": [
      150,
-     670,
-     1000,
-     1690,
-     2530,
+     610,
+     910,
+     1570,
+     2320,
+     3190,
      3460,
-     3730,
-     4210,
-     5350,
-     5920,
-     6280,
-     6700,
-     7000
+     3910,
+     4960,
+     5470,
+     5800,
+     6190,
+     6460
     ]
    },
    "vo_review_story_5": {
-    "s": 160,
-    "e": 6160,
+    "s": 140,
+    "e": 5760,
     "segs": [
      [
-      160,
-      920
+      140,
+      860
      ],
      [
-      1360,
-      3340
+      1260,
+      3120
      ],
      [
-      3900,
-      6160
+      3620,
+      5760
      ]
     ],
     "w": [
-     180,
-     1240,
-     1780,
-     2140,
-     2530,
-     2920,
-     3790,
-     4270,
-     4480,
-     5200,
-     5620,
-     5920
+     150,
+     1150,
+     1630,
+     1990,
+     2350,
+     2710,
+     3520,
+     3970,
+     4180,
+     4810,
+     5260,
+     5500
     ]
    },
    "vo_review_story_6": {
@@ -2493,32 +2489,32 @@
     ]
    },
    "vo_review_story_8a": {
-    "s": 180,
-    "e": 4920,
+    "s": 160,
+    "e": 4540,
     "segs": [
      [
-      180,
-      920
+      160,
+      860
      ],
      [
-      1460,
-      3000
+      1360,
+      2760
      ],
      [
-      3480,
-      4920
+      3200,
+      4540
      ]
     ],
     "w": [
      180,
-     1360,
-     1900,
-     2320,
-     2650,
-     3310,
-     3520,
-     3880,
-     4480
+     1240,
+     1720,
+     2110,
+     2440,
+     3070,
+     3250,
+     3580,
+     4120
     ]
    },
    "vo_review_story_8b": {
