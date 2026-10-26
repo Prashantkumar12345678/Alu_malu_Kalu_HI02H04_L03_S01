@@ -4888,7 +4888,7 @@ function mountReadingPractice(host, slide) {
       if(!current()||mode!=="ready")return;
       if(isPlaying){armIdle();return;}
       SwiftPAL.emit("idle_vo_replay",{slide_id:slide.id});
-      play(audioAsset("vo_story_idle_nudge"),armIdle);
+      play(audioAsset("vo_story_idle_nudge"),armIdle);pointNudgeAt(mic);   // "tap this button" - the hand shows which
     },IDLE_MS);
   };
   state.slideCleanup=()=>{closed=true;clearTimeout(timer);clearTimeout(idleT);stopWords();stopNudge();mic.classList.remove("p2-rec");};
@@ -4938,7 +4938,7 @@ function mountReadingPractice(host, slide) {
   // header speaker: before reading it repeats the instruction (page 1's own, else the "tap this button" line);
   // once the page is read it reads the sentence again. Never while the child is reading.
   state.replayAudio=()=>{
-    if(mode==="ready"){clearTimeout(idleT);play(audioFor(slide,"prompt")||audioAsset("vo_story_idle_nudge"),armIdle);}
+    if(mode==="ready"){clearTimeout(idleT);play(audioFor(slide,"prompt")||audioAsset("vo_story_idle_nudge"),armIdle);pointNudgeAt(mic);}
     else if(mode==="done")narrate();
   };
   $("navBtn").onclick=()=>{
@@ -4948,8 +4948,8 @@ function mountReadingPractice(host, slide) {
   const instruction=audioFor(slide,"prompt");
   if(instruction)play(instruction,armIdle);
   else armIdle();
-  // first story page only: the hand shows the child the mic (other pages: the mic just pulses)
-  if(slide.data.page_no===1)pointNudgeAt(mic);
+  // the hand comes onto the mic whenever "इस बटन पर टैप कीजिए…" is said (here, the 7 s reminder, the speaker) - every page
+  if(instruction)pointNudgeAt(mic);
 }
 
 const SlideModules = {
