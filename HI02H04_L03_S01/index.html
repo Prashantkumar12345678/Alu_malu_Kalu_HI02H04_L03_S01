@@ -1838,6 +1838,16 @@ body.vo-spk .audio-chip{pointer-events:none !important;opacity:.5 !important;fil
    line is spoken, or while another question is open or closing */
 .question-puzzle.qp-intro .qp-tile:not(.unlocked),.question-puzzle.qp-wait .qp-tile:not(.unlocked),
 body.vo-spk .question-puzzle:not(.assembling) .qp-tile:not(.unlocked){pointer-events:none;}
+/* BUG_01: the speaker from the mic tap until the line has been read back - greyed out (the same "busy" look as
+   while a line is spoken) and cannot be pressed at all */
+.audio-chip.chip-locked{pointer-events:none !important;opacity:.5 !important;filter:grayscale(1) brightness(1.2) !important;}
+/* no browser focus box around the mic after it is tapped */
+.reading-mic:focus,.reading-mic:focus-visible{outline:none;}
+/* BUG_02: the wrong character in the Q1 scene, once the answer is shown: blurred under its box (the picture itself
+   goes out of focus), no hover / press; a tap on it is swallowed by the box and does nothing */
+.identify-boxes .tis-hot.faded{opacity:1;pointer-events:auto;cursor:default;background:transparent;
+  -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);   /* review: Kaalu blurred, not a white veil */
+  border-color:rgba(255,255,255,.55);box-shadow:none;transform:none !important;}
 /* the finished picture: no blue (or green) frame around it */
 .question-puzzle.complete .qp-surface,.question-puzzle.complete .qp-board{border-color:transparent !important;}
 /* ...instead the finished picture celebrates like an achievement: a pop, a warm golden glow that keeps breathing,
@@ -3334,7 +3344,7 @@ function mountTapOptions({
   }
   function walkOptions(after) {
     state.hintActive = true;
-    setSwMood("hint");
+    setSwMood("tryagain");   // BUG_03: after the 2nd wrong answer Swiftie stays sad (no bulb) while the options are read
     // a short breath after the wrong tap before hint 2 starts speaking (taps stay blocked meanwhile)
     setTimeout(() => { if (isCurrent()) walkOptionsNow(after); }, HINT2_PAUSE_MS);
   }
@@ -4552,7 +4562,8 @@ function mountQuestionPuzzle(host, slide) {
       if (unlocked.has(i)) return;
       stopNudge();
       currentQuestion = q;
-      wrap.classList.add("qp-wait");   // until this piece is revealed, the other pieces can't be tapped
+      wrap.classList.add("qp-wait");
+      document.body.classList.add("vo-spk");   // BUG_04: speaker grey + untappable until the question VO has played   // until this piece is revealed, the other pieces can't be tapped
       state.slideStart = Date.now();
       // Review 1: the fill-in question's instruction IS the heading ("सही शब्द चुनकर वाक्य पूरा कीजिए")
       const isFill = q.data.kind === "fill_blanks";
@@ -4891,7 +4902,7 @@ function mountReadingPractice(host, slide) {
       play(audioAsset("vo_story_idle_nudge"),armIdle);pointNudgeAt(mic);   // "tap this button" - the hand shows which
     },IDLE_MS);
   };
-  state.slideCleanup=()=>{closed=true;clearTimeout(timer);clearTimeout(idleT);stopWords();stopNudge();mic.classList.remove("p2-rec");};
+  state.slideCleanup=()=>{closed=true;clearTimeout(timer);clearTimeout(idleT);stopWords();stopNudge();mic.classList.remove("p2-rec");$("audioChip").classList.remove("chip-locked");};
   const narrate=()=>{
     if(!current() || mode==="narrating")return;
     clearTimeout(timer);stopWords();stopNudge();
@@ -4904,6 +4915,7 @@ function mountReadingPractice(host, slide) {
     const done=()=>{
       if(!current())return;
       mode="done";setNavActive(true);
+      $("audioChip").classList.remove("chip-locked");
       $("navBtn").classList.add("nav-pulse"); // story VO finished: आगे pulses right away (page 1 also gets the hand after 7 s)
     };
     // data.sfx_after: a sound effect that follows the narrated sentence (e.g. the puppy's भौं-भौं on page 8).
@@ -4926,6 +4938,7 @@ function mountReadingPractice(host, slide) {
     stopAudio();stopNudge();stopWords();
     sfxTap(); // the button-press sound (reference sfx_tap) so the child hears the mic take the tap
     mode="reading";
+    $("audioChip").classList.add("chip-locked");   // BUG_01: while the child reads, the speaker stays blue but takes no tap
     setNavActive(false);
     mic.classList.add("p2-rec");
     // Match the reference's reading beat: a visual voice meter, without audio capture.
@@ -7357,6 +7370,8 @@ const SlideModules = {
       let sceneAttempts = 0;
       const miss = () => {
         if (done || isPlaying || state.hintActive) return;
+        // BUG_02: once the answer has been revealed, a tap on the faded Kaalu / the picture does nothing at all
+        if (sceneAttempts >= (CARD.scaffold_rules.max_attempts || 3)) return;
         sceneAttempts++;
         state.attempts = sceneAttempts;
         SwiftPAL.emit("answer_wrong", { slide_id: slide.id, phase: slide.phase, attempts: sceneAttempts });
