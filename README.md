@@ -1,7 +1,7 @@
-# HI02H04_L03_S01 · आलू-मालू-कालू (SwiftPAL FLN game)
+# HI02H04_L04_S01 · आलू-मालू-कालू (SwiftPAL FLN game)
 
 ```
-HI02H04_L03_S01/      the game - this is the only folder that is deployed (vercel.json outputDirectory)
+HI02H04_L04_S01/      the game - this is the only folder that is deployed (vercel.json outputDirectory)
   index.html          page + lesson data (card JSON)
   app.js, style.css   game engine and styles
   confetti.js/.css    FLN confetti kit

@@ -1,4 +1,4 @@
-# Only the game folder HI02H04_L03_S01/ (+ vercel.json) is kept in git and deployed.
+# Only the game folder HI02H04_L04_S01/ (+ vercel.json) is kept in git and deployed.
 # Everything below is dev-side and stays on this machine.
 _tools/
 _backup/

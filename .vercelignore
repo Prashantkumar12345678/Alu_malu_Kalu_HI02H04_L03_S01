@@ -1,4 +1,4 @@
-# Only HI02H04_L03_S01/ is served (vercel.json outputDirectory). Everything below is dev-side and
+# Only HI02H04_L04_S01/ is served (vercel.json outputDirectory). Everything below is dev-side and
 # never needs to reach Vercel: QA/build tooling, source masters, safety backups, docs.
 _tools/
 _masters/

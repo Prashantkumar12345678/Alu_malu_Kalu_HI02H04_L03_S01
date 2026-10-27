@@ -1,7 +1,7 @@
 {
  "version": "0.1",
- "skill_code": "HI02H04_L03_S01",
- "lo_code": "HI02H04_L03",
+ "skill_code": "HI02H04_L04_S01",
+ "lo_code": "HI02H04_L04",
  "grade": "02",
  "attribute": "H04",
  "skill_type": "CORE",
@@ -2665,5 +2665,5 @@
    }
   }
  },
- "review_source": "HI02H04_L03_S01_review.pptx.pdf · Recommendations only"
+ "review_source": "HI02H04_L04_S01_review.pptx.pdf · Recommendations only"
 }
